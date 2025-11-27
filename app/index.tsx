@@ -1,40 +1,22 @@
-
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { styles } from "./stylesheet";
 
-//const logo=require("../assets/logo.png");
-export default function App() {
+function onPressButton() {
+  alert("button pressed");
+}
+export default function WelcomeScreen() {
     return (
       <View style={styles.container}>
-        /*
-        <Image source={logo} style={styles.image} />
-        */
-        <Text style={styles.em}>Rayan</Text>
-        <Text style={styles.em}>Fire & safety</Text>
+        <Text style={styles.head1}>Welcome</Text>
+        <Text style={styles.head}>to Rayan </Text>
+        <Image style={styles.image} source={require("../assets/images/logo11.png")} />
+          <TouchableOpacity onPress={onPressButton}>
+      <Text style={styles.buttonText}>Click Me</Text>
+        <Text style={styles.em} >Rayan</Text>
+        <Text style={styles.em} >Fire & safety</Text>
+        
+    </TouchableOpacity>
       </View>
     );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  image: {
-    width: 200, 
-    height: 200, 
-  },
-  em: {
-    textAlign:"center",
-    verticalAlign: 'middle',  
-    textAlignVertical: 'center',
-    fontStyle: 'italic',
-    fontWeight: 'bold',
-    fontSize:18,
-    color: '#AA0000',
-    textShadowColor: 'rgba(74, 16, 16, 0.75)',
-    marginTop: 20,
-  },
-});
