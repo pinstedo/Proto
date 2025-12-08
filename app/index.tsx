@@ -9,8 +9,7 @@ function onPressButton() {
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.head1}>Welcome</Text>
-      <Text style={styles.head}>to Rayan </Text>
+      <Text style={styles.head1}>WELCOME</Text>
       <Image
         style={styles.image}
         source={require("../assets/images/logo11.png")}

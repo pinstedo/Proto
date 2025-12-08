@@ -40,8 +40,10 @@ export const styles = StyleSheet.create({
   },
   head1: {
     fontSize: 32,
+    fontFamily: "",
     fontWeight: "bold",
     textAlign: "center",
+    color:"#eb8934"
     //marginTop:50,
   },
   head: {
@@ -51,7 +53,12 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonText: {
-    color: "#0259c4",
+    backgroundColor:"#eb9834",
+    padding: 15,
+    marginTop: 30,
+    borderRadius: 8,
+    textAlign: "center",
+    color: "#ffffffff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -68,4 +75,16 @@ export const styles = StyleSheet.create({
     color: "black",
     width: "75%",
   },
+backButton: {
+  padding: 10,
+  marginBottom: 20,
+  backgroundColor:"#eb9834",
+  color:"#ffffff",
+  borderRadius: 8,
+},
+backArrow: {
+  color: "#ffffffff", 
+  fontSize:32,
+  fontWeight: 'bold',
+},
 });
