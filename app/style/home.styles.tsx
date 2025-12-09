@@ -43,17 +43,17 @@ export const styles = StyleSheet.create({
     fontFamily: "",
     fontWeight: "bold",
     textAlign: "center",
-    color:"#eb8934"
+    color: "#eb8934",
     //marginTop:50,
   },
   head: {
     fontSize: 25,
     fontWeight: "bold",
     textAlign: "center",
-    marginTop: 10,
+    marginTop: 5,
   },
   buttonText: {
-    backgroundColor:"#eb9834",
+    backgroundColor: "#eb9834",
     padding: 15,
     marginTop: 30,
     borderRadius: 8,
@@ -75,16 +75,21 @@ export const styles = StyleSheet.create({
     color: "black",
     width: "75%",
   },
-backButton: {
-  padding: 10,
-  marginBottom: 20,
-  backgroundColor:"#eb9834",
-  color:"#ffffff",
-  borderRadius: 8,
-},
-backArrow: {
-  color: "#ffffffff", 
-  fontSize:32,
-  fontWeight: 'bold',
-},
+  backButton: {
+    padding: 10,
+    marginBottom: 20,
+    backgroundColor: "#eb9834",
+    color: "#ffffff",
+    borderRadius: 8,
+  },
+  backArrow: {
+    color: "#ffffffff",
+    fontSize: 32,
+    fontWeight: "bold",
+  },
+  linkstyle: {
+    color: "#0000ff",
+    textDecorationLine: "underline",
+    marginTop: 10,
+  },
 });

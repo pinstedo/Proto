@@ -8,7 +8,10 @@ function onPressBackButton() {
 }
 
 function onPressButton() {
-  router.push("/authentication");
+  router.push("/home");
+}
+function onPressSignInButton() {
+  router.push("/authentication2");
 }
 
 const App = () => {
@@ -23,7 +26,13 @@ const App = () => {
       </TouchableOpacity>
       <Text style={styles.head1}>Sign up</Text>
       <Text style={styles.head}>To continue</Text>
-    
+      <Text style={styles.labelname}>Name</Text>
+      <TextInput
+        style={styles.valbox}
+        placeholder="muhammed fasal"
+        onChangeText={(text) => setName(text)}
+        value={name}
+      />
       <Text style={styles.labelname}>Phone Number</Text>
       <TextInput
         style={styles.valbox}
@@ -39,6 +48,9 @@ const App = () => {
       />
       <TouchableOpacity onPress={onPressButton}>
         <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onPressSignInButton}>
+        <Text style={styles.linkstyle}>(Sign In)</Text>
       </TouchableOpacity>
     </View>
   );

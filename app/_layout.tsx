@@ -8,7 +8,15 @@ export default function RootLayout() {
         <Stack.Screen name="authentication" options={{ title: "next" }} />
         <Stack.Screen name="home" options={{ title: "Home" }} />
         <Stack.Screen name="index" options={{ title: "profile" }} />
+        <Stack.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            presentation: "card",
+            animation: "slide_from_right",
+          }}
+        />
       </Stack>
     </SafeAreaView>
   );
-};
+}
