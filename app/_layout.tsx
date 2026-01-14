@@ -1,22 +1,14 @@
 import { Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
 
 export default function RootLayout() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="authentication" options={{ title: "next" }} />
-        <Stack.Screen name="home" options={{ title: "Home" }} />
-        <Stack.Screen name="index" options={{ title: "profile" }} />
-        <Stack.Screen
-          name="profile"
-          options={{
-            title: "Profile",
-            presentation: "card",
-            animation: "slide_from_right",
-          }}
-        />
-      </Stack>
-    </SafeAreaView>
+    <Stack screenOptions={{ headerShown:false }}>
+      <Stack.Screen name="auth/splashScreen" />
+      <Stack.Screen name="auth/authentication" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="add-labour" />
+      <Stack.Screen name="labours" />
+    </Stack>
   );
 }

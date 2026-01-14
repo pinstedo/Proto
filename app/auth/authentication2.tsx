@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { styles } from "/style/home.styles.ts";
+import { styles } from "../style/stylesheet";
 
 function onPressBackButton() {
   router.back();
@@ -12,7 +12,6 @@ function onPressButton() {
 }
 
 const App = () => {
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 

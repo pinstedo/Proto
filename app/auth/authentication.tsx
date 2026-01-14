@@ -1,17 +1,14 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { styles } from "./stylesheet";
-
-function onPressBackButton() {
-  router.back();
-}
+import { styles } from "../style/stylesheet";
 
 function onPressButton() {
-  router.push("/home");
+  // navigate into the main app tabs
+  router.replace("/home");
 }
 function onPressSignInButton() {
-  router.push("/authentication2");
+  router.push("../auth/authentication2");
 }
 
 const App = () => {
@@ -21,11 +18,8 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onPressBackButton} style={styles.backButton}>
-        <Text style={styles.backArrow}>←</Text>
-      </TouchableOpacity>
-      <Text style={styles.head1}>Sign up</Text>
-      <Text style={styles.head}>To continue</Text>
+      <Text style={styles.head1}>Welcome to rayan</Text>
+      <Text style={styles.head}>Sign up To continue</Text>
       <Text style={styles.labelname}>Name</Text>
       <TextInput
         style={styles.valbox}

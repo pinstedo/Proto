@@ -39,15 +39,15 @@ export const styles = StyleSheet.create({
     marginTop: 5,
   },
   head1: {
-    fontSize: 32,
-    fontFamily: "",
+    fontSize: 55,
+    fontFamily: "impact",
     fontWeight: "bold",
     textAlign: "center",
     color: "#eb8934",
     //marginTop:50,
   },
   head: {
-    fontSize: 25,
+    fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 5,
@@ -64,6 +64,13 @@ export const styles = StyleSheet.create({
   },
   labelname: {
     color: "#000000",
+    //textAlign: "left",
+    //alignSelf: "flex-start",
+    fontSize: 16,
+    marginTop: 5,
+    marginBottom: 5,
+    fontWeight: "600",
+    marginLeft: 8,
   },
   valbox: {
     borderWidth: 1,
