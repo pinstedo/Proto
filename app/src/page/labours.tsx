@@ -29,30 +29,38 @@ export default function Labours() {
   }, [safeNewLabour, router]);
 
   return (
-    <ScrollView contentContainerStyle={local.container}>
-      <View style={local.headerRow}>
-        <Pressable onPress={() => router.back()} style={local.backBtn} accessibilityRole="button">
-          <Text style={local.backText}>← Back</Text>
-        </Pressable>
-        <Text style={local.header}>Labours</Text>
-        <View style={{ width: 60 }} />
-      </View>
+		<ScrollView contentContainerStyle={local.container}>
+			<View style={local.headerRow}>
+				<Pressable
+					onPress={() => router.back()}
+					style={local.backBtn}
+					accessibilityRole="button"
+				>
+					<Text style={local.backText}>← Back</Text>
+				</Pressable>
+				<Text style={local.header}>Labours</Text>
+				<View style={{ width: 60 }} />
+			</View>
 
-      {labours.map((lab, i) => (
-        <View key={i} style={local.card}>
-          <View style={local.row}>
-            <Text style={local.name}>{lab.name}</Text>
-            <Text style={local.rate}>{lab.rate ? `₹${Number(lab.rate).toFixed(2)}` : "-"}</Text>
-          </View>
-          <Text style={local.small}>{lab.trade} • {lab.site}</Text>
-          <Text style={local.small}>{lab.phone}</Text>
-          <Text style={local.time}>{lab.createdAt}</Text>
-        </View>
-      ))}
+			{labours?.map((lab, i) => (
+				<View key={i} style={local.card}>
+					<View style={local.row}>
+						<Text style={local.name}>{lab.name}</Text>
+						<Text style={local.rate}>
+							{lab.rate ? `₹${Number(lab.rate).toFixed(2)}` : "-"}
+						</Text>
+					</View>
+					<Text style={local.small}>
+						{lab.trade} • {lab.site}
+					</Text>
+					<Text style={local.small}>{lab.phone}</Text>
+					<Text style={local.time}>{lab.createdAt}</Text>
+				</View>
+			))}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
-  );
+			<View style={{ height: 40 }} />
+		</ScrollView>
+	);
 }
 
 const local = StyleSheet.create({
