@@ -1,20 +1,32 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+type Labour = {
+  name: string;
+  rate?: number;
+  trade: string;
+  site: string;
+  phone: string;
+  createdAt?: string;
+};
 export default function Labours() {
   const router = useRouter();
-  let { newLabour } = useLocalSearchParams();
+  const { newLabour } = useLocalSearchParams();
+
+  const [labours, setLabours] = useState<Labour[]>([]);
 
   // safety: ignore empty or invalid values
-  const safeNewLabour = typeof newLabour === 'string' && newLabour.trim() ? newLabour : null;
+  const safeNewLabour =
+    typeof newLabour === "string" && newLabour.trim() ? newLabour : null;
 
   useEffect(() => {
     if (!safeNewLabour) return;
 
     try {
-      const parsed = JSON.parse(decodeURIComponent(safeNewLabour as string));
-      const entry = { ...parsed, createdAt: new Date().toLocaleString() };
+      const parsed = JSON.parse(decodeURIComponent(safeNewLabour));
+      const entry: Labour = { ...parsed, createdAt: new Date().toLocaleString() };
+
       setLabours((l) => [entry, ...l]);
     } catch (err) {
       console.warn("Failed to parse newLabour param", err);
@@ -29,6 +41,7 @@ export default function Labours() {
   }, [safeNewLabour, router]);
 
   return (
+<<<<<<< HEAD
 		<ScrollView contentContainerStyle={local.container}>
 			<View style={local.headerRow}>
 				<Pressable
@@ -57,6 +70,37 @@ export default function Labours() {
 					<Text style={local.time}>{lab.createdAt}</Text>
 				</View>
 			))}
+=======
+    <ScrollView contentContainerStyle={local.container}>
+      <View style={local.headerRow}>
+        <Pressable
+          onPress={() => router.push("./home")}
+          style={local.backBtn}
+          accessibilityRole="button"
+        >
+          <Text style={local.backText}>← Back</Text>
+        </Pressable>
+        <Text style={local.header}>Labours</Text>
+        <View style={{ width: 60 }} />
+      </View>
+
+      {labours.map((lab, i) => (
+        <View key={lab.createdAt ?? i} style={local.card}>
+          <View style={local.row}>
+            <Text style={local.name}>{lab.name}</Text>
+
+            <Text style={local.rate}>
+              {lab.rate !== undefined ? '₹{Number(lab.rate).toFixed(2)}' : "-"}
+            </Text>
+          </View>
+          <Text style={local.small}>
+            {lab.trade} • {lab.site}
+          </Text>
+          <Text style={local.small}>{lab.phone}</Text>
+          <Text style={local.time}>{lab.createdAt}</Text>
+        </View>
+      ))}
+>>>>>>> 07bae30 (night 15)
 
 			<View style={{ height: 40 }} />
 		</ScrollView>
@@ -65,7 +109,13 @@ export default function Labours() {
 
 const local = StyleSheet.create({
   container: { padding: 20, paddingTop: 30, backgroundColor: "#fff", minHeight: "100%" },
-  headerRow: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  headerRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
   backBtn: { paddingVertical: 6, paddingHorizontal: 8 },
   backText: { color: "#0a84ff", fontWeight: "600" },
   header: { fontSize: 24, fontWeight: "700", marginBottom: 0 },
