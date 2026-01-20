@@ -3,8 +3,17 @@ import React, { useEffect } from "react";
 import { Image, StatusBar, View } from "react-native";
 import { styles } from "./style/stylesheet";
 
+<<<<<<< HEAD:app/index.tsx
 export default function SplashScreen() {
 	const router = useRouter();
+=======
+export default function IndexRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    // redirect to splash (auth) on app start
+    router.replace("/auth/authentication");
+  }, [router]);
+>>>>>>> ec65267 (just cleared):app/page1.tsx
 
 	useEffect(() => {
 		const t = setTimeout(() => {
