@@ -2,7 +2,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { JSX } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { styles } from "../../style/stylesheet1";
+import { styles } from "../style/stylesheet1";
 
 const options = [
   { key: "attendance", icon: "check-circle", title: "Attendance", desc: "Record and view attendance" },

@@ -1,15 +1,15 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { styles as globalStyles } from "../../style/stylesheet";
+import { styles as globalStyles, styles } from "../style/stylesheet";
 
 export default function AddLabour() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function AddLabour() {
     // Simulate success
     const activity = `${name} added`;
     Alert.alert("Success", "Labour added successfully.", [
-      { text: "OK", onPress: () => router.push(`/labours?newLabour=${encodeURIComponent(JSON.stringify(payload))}&newActivity=${encodeURIComponent(activity)}`) },
+      { text: "OK", onPress: () => router.push(`../screens/labours?newLabour=${encodeURIComponent(JSON.stringify(payload))}&newActivity=${encodeURIComponent(activity)}`) },
     ]);
   };
 
@@ -41,30 +41,30 @@ export default function AddLabour() {
     <ScrollView contentContainerStyle={local.container}>
       <View style={local.header}>
         <Text style={globalStyles.head1}>Add Labour</Text>
-        <Text style={local.sub}>Enter essential information below</Text>
+        <Text style={local.sub}>Enter Labour details below</Text>
       </View>
 
       <View style={local.form}>
-        <Text style={local.label}>Full name *</Text>
-        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="John Doe" />
+        <Text style={styles.labelname}>Full name:</Text>
+        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="abhishek" />
 
-        <Text style={local.label}>Phone</Text>
-        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+1234567890" keyboardType="phone-pad" />
+        <Text style={styles.labelname}>Phone:</Text>
+        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" keyboardType="phone-pad" />
+        
+        <Text style={styles.labelname}>Aadhaar number:</Text>
+        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="" keyboardType="phone-pad" />
 
-        <Text style={local.label}>Trade / Skill</Text>
-        <TextInput style={local.input} value={trade} onChangeText={setTrade} placeholder="e.g., Electrician" />
-
-        <Text style={local.label}>Job site</Text>
+        <Text style={styles.labelname}>Job site:</Text>
         <TextInput style={local.input} value={site} onChangeText={setSite} placeholder="Site name or address" />
 
-        <Text style={local.label}>Hourly rate</Text>
+        <Text style={styles.labelname}>Hourly rate:</Text>
         <TextInput style={local.input} value={rate} onChangeText={setRate} placeholder="e.g., 15.00" keyboardType="decimal-pad" />
 
-        <Text style={local.label}>Notes</Text>
+        <Text style={styles.labelname}>Notes:</Text>
         <TextInput style={[local.input, { height: 90 }]} value={notes} onChangeText={setNotes} placeholder="Optional notes" multiline />
 
         <TouchableOpacity style={local.submit} onPress={onSubmit}>
-          <Text style={local.submitText}>Submit</Text>
+          <Text style={local.submitText}>add Labour</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -85,6 +85,7 @@ const local = StyleSheet.create({
   sub: {
     color: "#666",
     marginTop: 6,
+    fontSize: 16,
   },
   form: {
     marginTop: 6,

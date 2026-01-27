@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { styles as globalStyles } from "../../style/stylesheet";
+import { styles as globalStyles } from "../style/stylesheet";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function HomeScreen() {
   const { newActivity } = useLocalSearchParams();
 
   const stats = [
-    { key: "workers", label: "Workers", value: 128 },
+    { key: "workers", label: "Workers", value: 61 },
     { key: "jobs", label: "Active Jobs", value: 24 },
     { key: "attendance", label: "Today Present", value: 94 },
     { key: "approvals", label: "Pending Approvals", value: 3 },
@@ -70,11 +70,11 @@ export default function HomeScreen() {
       <View style={local.actions}> 
         <Text style={local.sectionTitle}>Quick Actions</Text>
         <View style={local.actionsRow}>
-          <TouchableOpacity style={local.actionButton} onPress={() => router.push('/add-labour')}>
+          <TouchableOpacity style={local.actionButton} onPress={() => router.push('../screens/add-labour')}>
             <Text style={local.actionText}>+ Add labour</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={local.actionButton} onPress={() => router.push('/labours')}>
+          <TouchableOpacity style={local.actionButton} onPress={() => router.push('../screens/labours')}>
             <Text style={local.actionText}>Show labours</Text>
           </TouchableOpacity>
 

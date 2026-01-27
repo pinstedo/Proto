@@ -1,7 +1,48 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
+
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import { default as React, default as React, useEffect, useRef } from "react";
 import { Animated } from "react-native";
+export default function RootLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: "#eb9834",
+      }}
+    >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="manage"
+        options={{
+          title: "Manage",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="briefcase-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
 
 const IconWithAnimation = ({ name, color, focused, size }: any) => {
   const scale = useRef(new Animated.Value(focused ? 1.08 : 1)).current;

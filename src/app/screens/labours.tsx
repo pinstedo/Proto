@@ -10,13 +10,12 @@ type Labour = {
   phone: string;
   createdAt?: string;
 };
+
 export default function Labours() {
   const router = useRouter();
   const { newLabour } = useLocalSearchParams();
-
   const [labours, setLabours] = useState<Labour[]>([]);
 
-  // safety: ignore empty or invalid values
   const safeNewLabour =
     typeof newLabour === "string" && newLabour.trim() ? newLabour : null;
 
@@ -25,59 +24,22 @@ export default function Labours() {
 
     try {
       const parsed = JSON.parse(decodeURIComponent(safeNewLabour));
-      const entry: Labour = { ...parsed, createdAt: new Date().toLocaleString() };
+      const entry: Labour = {
+        ...parsed,
+        createdAt: new Date().toLocaleString(),
+      };
 
       setLabours((l) => [entry, ...l]);
+      router.replace("../screens/labours"); // clear param
     } catch (err) {
       console.warn("Failed to parse newLabour param", err);
     }
-
-    // clear the param (best-effort; ignore navigation errors)
-    try {
-      router.replace("/labours");
-    } catch (e) {
-      /* ignore */
-    }
-  }, [safeNewLabour, router]);
+  }, [safeNewLabour]);
 
   return (
-<<<<<<< HEAD
-		<ScrollView contentContainerStyle={local.container}>
-			<View style={local.headerRow}>
-				<Pressable
-					onPress={() => router.back()}
-					style={local.backBtn}
-					accessibilityRole="button"
-				>
-					<Text style={local.backText}>← Back</Text>
-				</Pressable>
-				<Text style={local.header}>Labours</Text>
-				<View style={{ width: 60 }} />
-			</View>
-
-			{labours?.map((lab, i) => (
-				<View key={i} style={local.card}>
-					<View style={local.row}>
-						<Text style={local.name}>{lab.name}</Text>
-						<Text style={local.rate}>
-							{lab.rate ? `₹${Number(lab.rate).toFixed(2)}` : "-"}
-						</Text>
-					</View>
-					<Text style={local.small}>
-						{lab.trade} • {lab.site}
-					</Text>
-					<Text style={local.small}>{lab.phone}</Text>
-					<Text style={local.time}>{lab.createdAt}</Text>
-				</View>
-			))}
-=======
     <ScrollView contentContainerStyle={local.container}>
       <View style={local.headerRow}>
-        <Pressable
-          onPress={() => router.push("./home")}
-          style={local.backBtn}
-          accessibilityRole="button"
-        >
+        <Pressable onPress={() => router.back()} style={local.backBtn}>
           <Text style={local.backText}>← Back</Text>
         </Pressable>
         <Text style={local.header}>Labours</Text>
@@ -88,11 +50,13 @@ export default function Labours() {
         <View key={lab.createdAt ?? i} style={local.card}>
           <View style={local.row}>
             <Text style={local.name}>{lab.name}</Text>
-
             <Text style={local.rate}>
-              {lab.rate !== undefined ? '₹{Number(lab.rate).toFixed(2)}' : "-"}
+              {lab.rate !== undefined
+                ? `₹${Number(lab.rate).toFixed(2)}`
+                : "-"}
             </Text>
           </View>
+
           <Text style={local.small}>
             {lab.trade} • {lab.site}
           </Text>
@@ -100,15 +64,19 @@ export default function Labours() {
           <Text style={local.time}>{lab.createdAt}</Text>
         </View>
       ))}
->>>>>>> 07bae30 (night 15)
 
-			<View style={{ height: 40 }} />
-		</ScrollView>
-	);
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
 }
 
 const local = StyleSheet.create({
-  container: { padding: 20, paddingTop: 30, backgroundColor: "#fff", minHeight: "100%" },
+  container: {
+    padding: 20,
+    paddingTop: 30,
+    backgroundColor: "#fff",
+    minHeight: "100%",
+  },
   headerRow: {
     width: "100%",
     flexDirection: "row",
@@ -118,8 +86,13 @@ const local = StyleSheet.create({
   },
   backBtn: { paddingVertical: 6, paddingHorizontal: 8 },
   backText: { color: "#0a84ff", fontWeight: "600" },
-  header: { fontSize: 24, fontWeight: "700", marginBottom: 0 },
-  card: { padding: 14, borderRadius: 8, backgroundColor: "#f7f7f7", marginBottom: 10 },
+  header: { fontSize: 24, fontWeight: "700" },
+  card: {
+    padding: 14,
+    borderRadius: 8,
+    backgroundColor: "#f7f7f7",
+    marginBottom: 10,
+  },
   row: { flexDirection: "row", justifyContent: "space-between" },
   name: { fontSize: 16, fontWeight: "700" },
   rate: { color: "#666" },

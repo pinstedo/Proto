@@ -1,9 +1,9 @@
-<<<<<<< HEAD:app/auth/splashScreen.tsx
-=======
+
+
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Image, StatusBar, View } from "react-native";
-import { styles } from "../../style/stylesheet";
+import { styles } from "../style/stylesheet";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -28,5 +28,3 @@ export default function SplashScreen() {
     </View>
   );
 }
-
->>>>>>> ec65267 (just cleared):app/src/page/index.tsx
