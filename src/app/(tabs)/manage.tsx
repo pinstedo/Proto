@@ -1,4 +1,4 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import React, { JSX } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -14,13 +14,16 @@ const options = [
 
 export default function Manage(): JSX.Element {
   const router = useRouter();
-
+  
   const onPress = (key: string) => {
     if (key === "add-labour") {
-      router.push("/add-labour");
+      router.push("../screens/add-labour");
       return;
     }
-
+    if (key === "attendance") {
+      router.push("../screens/attendance");
+      return;
+    }
     // navigate to dedicated management screen (ensure routes exist or create them)
     router.push(`/manage/${key}` as any);
   };

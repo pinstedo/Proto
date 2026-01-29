@@ -15,7 +15,7 @@ export default function AddLabour() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [trade, setTrade] = useState("");
+  const [aadhaar, setAadhaar] = useState("");
   const [site, setSite] = useState("");
   const [rate, setRate] = useState("");
   const [notes, setNotes] = useState("");
@@ -27,11 +27,11 @@ export default function AddLabour() {
     }
 
     // Basic payload — replace with API call as needed
-    const payload = { name, phone, trade, site, rate, notes };
+    const payload = { name, phone, aadhaar, site, rate, notes };
     console.log("Add Labour", payload);
 
     // Simulate success
-    const activity = `${name} added`;
+    const activity = `${name}, ${rate}, ${aadhaar}, ${phone} added`;
     Alert.alert("Success", "Labour added successfully.", [
       { text: "OK", onPress: () => router.push(`../screens/labours?newLabour=${encodeURIComponent(JSON.stringify(payload))}&newActivity=${encodeURIComponent(activity)}`) },
     ]);
@@ -52,7 +52,7 @@ export default function AddLabour() {
         <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" keyboardType="phone-pad" />
         
         <Text style={styles.labelname}>Aadhaar number:</Text>
-        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="" keyboardType="phone-pad" />
+        <TextInput style={local.input} value={aadhaar} onChangeText={setAadhaar} placeholder="" keyboardType="phone-pad" />
 
         <Text style={styles.labelname}>Job site:</Text>
         <TextInput style={local.input} value={site} onChangeText={setSite} placeholder="Site name or address" />
@@ -62,6 +62,9 @@ export default function AddLabour() {
 
         <Text style={styles.labelname}>Notes:</Text>
         <TextInput style={[local.input, { height: 90 }]} value={notes} onChangeText={setNotes} placeholder="Optional notes" multiline />
+        <TouchableOpacity style={local.submit} onPress={() => {}}>
+          <Text style={local.submitText}>cancel</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={local.submit} onPress={onSubmit}>
           <Text style={local.submitText}>add Labour</Text>

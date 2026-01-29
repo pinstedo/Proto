@@ -70,12 +70,8 @@ export default function HomeScreen() {
       <View style={local.actions}> 
         <Text style={local.sectionTitle}>Quick Actions</Text>
         <View style={local.actionsRow}>
-          <TouchableOpacity style={local.actionButton} onPress={() => router.push('../screens/add-labour')}>
-            <Text style={local.actionText}>+ Add labour</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity style={local.actionButton} onPress={() => router.push('../screens/labours')}>
-            <Text style={local.actionText}>Show labours</Text>
+            <Text style={local.actionText}>Show Labours</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={local.actionButton} onPress={() => {}}>

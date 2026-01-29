@@ -46,7 +46,7 @@ export default function Profile() {
           </Pressable>
           <Pressable
             style={[styles.actionBtn, styles.logoutBtn]}
-            onPress={() => router.replace("/auth/authentication")}
+            onPress={() => router.replace("./screens/authentication")}
           >
             <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
           </Pressable>
