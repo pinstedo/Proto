@@ -13,47 +13,47 @@ export default function Profile() {
     .toUpperCase();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-        <Pressable style={styles.closeBtn} onPress={() => router.back()}>
-          <Text style={styles.closeText}>Close</Text>
-        </Pressable>
-      </View>
+		<View style={styles.container}>
+			<View style={styles.header}>
+				<Text style={styles.title}>Profile</Text>
+				<Pressable style={styles.closeBtn} onPress={() => router.back()}>
+					<Text style={styles.closeText}>Close</Text>
+				</Pressable>
+			</View>
 
-      <View style={styles.body}>
-        <View style={styles.avatar}>
-          {/* initials */}
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
+			<View style={styles.body}>
+				<View style={styles.avatar}>
+					{/* initials */}
+					<Text style={styles.avatarText}>{initials}</Text>
+				</View>
 
-        <Text style={styles.name}>{userName}</Text>
-        <Text style={styles.role}>Administrator</Text>
+				<Text style={styles.name}>{userName}</Text>
+				<Text style={styles.role}>Administrator</Text>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Phone</Text>
-          <Text style={styles.infoValue}>+91 98765 43210</Text>
-        </View>
+				<View style={styles.infoRow}>
+					<Text style={styles.infoLabel}>Phone</Text>
+					<Text style={styles.infoValue}>+91 98765 43210</Text>
+				</View>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue}>admin@example.com</Text>
-        </View>
+				<View style={styles.infoRow}>
+					<Text style={styles.infoLabel}>Email</Text>
+					<Text style={styles.infoValue}>admin@example.com</Text>
+				</View>
 
-        <View style={styles.actions}>
-          <Pressable style={styles.actionBtn} onPress={() => {}}>
-            <Text style={styles.actionText}>Edit Profile</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.actionBtn, styles.logoutBtn]}
-            onPress={() => router.replace("./screens/authentication")}
-          >
-            <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  );
+				<View style={styles.actions}>
+					<Pressable style={styles.actionBtn} onPress={() => {}}>
+						<Text style={styles.actionText}>Edit Profile</Text>
+					</Pressable>
+					<Pressable
+						style={[styles.actionBtn, styles.logoutBtn]}
+						onPress={() => router.replace("/(screens)/authentication")}
+					>
+						<Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
+					</Pressable>
+				</View>
+			</View>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({

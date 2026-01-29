@@ -21,9 +21,13 @@ export default function Manage(): JSX.Element {
       return;
     }
     if (key === "attendance") {
-      router.push("../screens/attendance");
-      return;
-    }
+			router.push("/screens/attendance");
+			return;
+		}
+		if (key === "overtime") {
+			router.push("/(screens)/overtime");
+			return;
+		}
     // navigate to dedicated management screen (ensure routes exist or create them)
     router.push(`/manage/${key}` as any);
   };
