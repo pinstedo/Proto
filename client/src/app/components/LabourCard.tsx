@@ -1,0 +1,229 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+interface Labour {
+    id: number;
+    name: string;
+    phone: string;
+    trade: string;
+    rate?: number;
+    site: string;
+    site_id?: number;
+    status?: 'active' | 'terminated' | 'blacklisted';
+}
+
+interface LabourCardProps {
+    labour: Labour;
+    onMove?: (labour: Labour) => void;
+    onTerminate?: (labour: Labour) => void;
+    onBlacklist?: (labour: Labour) => void;
+    showMoveAction?: boolean;
+}
+
+export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, showMoveAction = false }: LabourCardProps) => {
+    const getStatusColor = (status?: string) => {
+        switch (status) {
+            case 'terminated': return '#e53935';
+            case 'blacklisted': return '#424242';
+            default: return '#2e7d32'; // active
+        }
+    };
+
+    const isActionable = labour.status !== 'terminated' && labour.status !== 'blacklisted';
+
+    return (
+        <View style={[
+            styles.card,
+            labour.status === 'terminated' && styles.terminatedCard,
+            labour.status === 'blacklisted' && styles.blacklistedCard
+        ]}>
+            <View style={styles.headerRow}>
+                <View>
+                    <View style={styles.nameRow}>
+                        <Text style={styles.name}>{labour.name}</Text>
+                        {labour.status && labour.status !== 'active' && (
+                            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(labour.status) }]}>
+                                <Text style={styles.statusText}>{labour.status.toUpperCase()}</Text>
+                            </View>
+                        )}
+                    </View>
+                    <Text style={styles.phone}>{labour.phone}</Text>
+                </View>
+                <View style={styles.rateContainer}>
+                    <Text style={styles.rateLabel}>Rate/hr</Text>
+                    <Text style={styles.rate}>
+                        {labour.rate ? `₹${Number(labour.rate).toFixed(2)}` : "-"}
+                    </Text>
+                </View>
+            </View>
+
+            <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                    <MaterialIcons name="work" size={16} color="#666" />
+                    <Text style={styles.detailText}>{labour.trade || "General"}</Text>
+                </View>
+                <View style={styles.detailItem}>
+                    <MaterialIcons name="location-city" size={16} color="#666" />
+                    <Text style={styles.detailText} numberOfLines={1}>{labour.site || "Unassigned"}</Text>
+                </View>
+            </View>
+
+            {showMoveAction && (
+                <View style={styles.actionRow}>
+                    {isActionable && (
+                        <>
+                            <TouchableOpacity
+                                style={styles.actionBtn}
+                                onPress={() => onMove && onMove(labour)}
+                            >
+                                <MaterialIcons name="sync-alt" size={16} color="#0a84ff" />
+                                <Text style={[styles.actionBtnText, { color: '#0a84ff' }]}>Move</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.actionBtn}
+                                onPress={() => onTerminate && onTerminate(labour)}
+                            >
+                                <MaterialIcons name="block" size={16} color="#e53935" />
+                                <Text style={[styles.actionBtnText, { color: '#e53935' }]}>Terminate</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.actionBtn}
+                                onPress={() => onBlacklist && onBlacklist(labour)}
+                            >
+                                <MaterialIcons name="gavel" size={16} color="#333" />
+                                <Text style={[styles.actionBtnText, { color: '#333' }]}>Blacklist</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
+                    {!isActionable && (
+                        <Text style={{ color: '#999', fontSize: 13, fontStyle: 'italic' }}>
+                            Actions unavailable for {labour.status} labour
+                        </Text>
+                    )}
+                </View>
+            )}
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    terminatedCard: {
+        backgroundColor: '#ffebee',
+        borderColor: '#ef9a9a',
+        borderWidth: 1,
+    },
+    blacklistedCard: {
+        backgroundColor: '#eeeeee',
+        borderColor: '#bdbdbd',
+        borderWidth: 1,
+        opacity: 0.8,
+    },
+    headerRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 12,
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 4,
+    },
+    name: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#333",
+    },
+    statusBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    statusText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    phone: {
+        fontSize: 14,
+        color: "#666",
+    },
+    rateContainer: {
+        alignItems: "flex-end",
+    },
+    rateLabel: {
+        fontSize: 12,
+        color: "#999",
+    },
+    rate: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#2e7d32",
+    },
+    detailsRow: {
+        flexDirection: "row",
+        gap: 16,
+        marginBottom: 12,
+    },
+    detailItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        flex: 1,
+    },
+    detailText: {
+        fontSize: 14,
+        color: "#555",
+        flex: 1,
+    },
+    actionRow: {
+        borderTopWidth: 1,
+        borderTopColor: "#f0f0f0",
+        paddingTop: 12,
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        gap: 12,
+    },
+    actionBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 6,
+        backgroundColor: '#f5f5f5',
+    },
+    actionBtnText: {
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    moveBtn: { // Keeping for backward compatibility if needed, though replaced
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "#e8f4ff",
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+    },
+    moveBtnText: {
+        fontSize: 14,
+        color: "#0a84ff",
+        fontWeight: "600",
+    },
+});

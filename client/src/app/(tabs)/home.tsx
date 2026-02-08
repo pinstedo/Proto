@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
 	ScrollView,
 	StyleSheet,
@@ -8,33 +8,63 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { API_URL } from "../../constants";
 import { styles as globalStyles } from "../style/stylesheet";
 
 export default function HomeScreen() {
 	const router = useRouter();
-	const today = new Date().toLocaleDateString();
+	const today = new Date().toLocaleDateString(undefined, {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
 	const [query, setQuery] = useState("");
 	const { newActivity } = useLocalSearchParams();
 
-	const stats = [
-		{ key: "workers", label: "Workers", value: 0 },
-		{ key: "jobs", label: "Active workers", value: 0 },
-		{ key: "attendance", label: "Today Present", value: 0 },
-		{ key: "approvals", label: "Total site", value: 0 },
+	const [stats, setStats] = useState({
+		workers: 0,
+		jobs: 0,
+		attendance: 0,
+		approvals: 0,
+	});
+
+	const [recent, setRecent] = useState<string[]>([]);
+
+	useFocusEffect(
+		useCallback(() => {
+			const fetchData = async () => {
+				try {
+					const statsRes = await fetch(`${API_URL}/dashboard/stats`);
+					const statsData = await statsRes.json();
+					if (statsRes.ok) setStats(statsData);
+
+					const recentRes = await fetch(`${API_URL}/dashboard/recent`);
+					const recentData = await recentRes.json();
+					if (recentRes.ok) setRecent(recentData);
+				} catch (error) {
+					console.error("Failed to fetch dashboard data:", error);
+				}
+			};
+
+			fetchData();
+		}, [])
+	);
+
+	const statsDisplay = [
+		{ key: "workers", label: "Workers", value: stats.workers },
+		{ key: "jobs", label: "Active workers", value: stats.jobs },
+		{ key: "attendance", label: "Today Present", value: stats.attendance },
+		{ key: "approvals", label: "Total site", value: stats.approvals },
 	];
 
-	const [recent, setRecent] = useState<string[]>([
-		"John Doe checked in",
-		"New job posted: Site A",
-		"Timesheet submitted by Jane",
-		"Approval requested: Material purchase",
-	]);
-
-	useEffect(() => {
+	// Optional: if newActivity param is passed, we might want to manually add it 
+	// or just refetch. Refetching is safer to ensure consistency.
+	// But sticking to existing logic for "instant feedback" feel if desired:
+	React.useEffect(() => {
 		if (newActivity) {
 			const entry = `${newActivity} • ${new Date().toLocaleTimeString()}`;
 			setRecent((r) => [entry, ...r]);
-			// clear the param so it doesn't reapply on refresh
 			router.replace("/home");
 		}
 	}, [newActivity, router]);
@@ -59,7 +89,7 @@ export default function HomeScreen() {
 			</View>
 
 			<View style={local.cardsRow}>
-				{stats.map((s) => (
+				{statsDisplay.map((s) => (
 					<View key={s.key} style={local.card}>
 						<Text style={local.cardValue}>{s.value}</Text>
 						<Text style={local.cardLabel}>{s.label}</Text>
@@ -72,12 +102,19 @@ export default function HomeScreen() {
 				<View style={local.actionsRow}>
 					<TouchableOpacity
 						style={local.actionButton}
-						onPress={() => router.push("../screens/labours")}
+						onPress={() => router.push("/(screens)/labours")}
 					>
-						<Text style={local.actionText}>Show Labours</Text>
+						<Text style={local.actionText}>Labours</Text>
 					</TouchableOpacity>
 
-					<TouchableOpacity style={local.actionButton} onPress={() => {}}>
+					<TouchableOpacity
+						style={local.actionButton}
+						onPress={() => router.push("/(screens)/add-supervisor" as any)}
+					>
+						<Text style={local.actionText}>Add Supervisor</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity style={local.actionButton} onPress={() => { }}>
 						<Text style={local.actionText}>🗂 Generate Reports</Text>
 					</TouchableOpacity>
 				</View>
@@ -85,11 +122,15 @@ export default function HomeScreen() {
 
 			<View style={local.recent}>
 				<Text style={local.sectionTitle}>Recent Activity</Text>
-				{(query ? filteredRecent : recent).map((r, i) => (
-					<View key={i} style={local.recentItem}>
-						<Text style={local.recentText}>{r}</Text>
-					</View>
-				))}
+				{filteredRecent.length === 0 ? (
+					<Text style={{ color: "#888", fontStyle: "italic" }}>No recent activity</Text>
+				) : (
+					filteredRecent.map((r, i) => (
+						<View key={i} style={local.recentItem}>
+							<Text style={local.recentText}>{r}</Text>
+						</View>
+					))
+				)}
 			</View>
 
 			<View style={{ height: 40 }} />

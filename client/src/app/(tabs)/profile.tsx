@@ -1,59 +1,86 @@
-import { useRouter } from "expo-router";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Profile() {
   const router = useRouter();
-  const userName = "Admin User";
+  const [user, setUser] = useState<any>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUser = async () => {
+        try {
+          const userData = await AsyncStorage.getItem("userData");
+          if (userData) {
+            setUser(JSON.parse(userData));
+          }
+        } catch (error) {
+          console.error("Failed to load user data", error);
+        }
+      };
+      fetchUser();
+    }, [])
+  );
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      router.replace("/auth/authentication");
+    } catch (error) {
+      console.error("Failed to logout", error);
+    }
+  };
+
+  const userName = user?.name || "User";
+  const userPhone = user?.phone || "";
+  const userRole = user?.role || "User";
+
   const initials = userName
-    .split(" ")
-    .map((s) => s[0] || "")
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    ? userName
+      .split(" ")
+      .map((s: string) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
+    : "";
 
   return (
-		<View style={styles.container}>
-			<View style={styles.header}>
-				<Text style={styles.title}>Profile</Text>
-				<Pressable style={styles.closeBtn} onPress={() => router.back()}>
-					<Text style={styles.closeText}>Close</Text>
-				</Pressable>
-			</View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+        <Pressable style={styles.closeBtn} onPress={() => router.back()}>
+          <Text style={styles.closeText}>Close</Text>
+        </Pressable>
+      </View>
 
-			<View style={styles.body}>
-				<View style={styles.avatar}>
-					{/* initials */}
-					<Text style={styles.avatarText}>{initials}</Text>
-				</View>
+      <View style={styles.body}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
 
-				<Text style={styles.name}>{userName}</Text>
-				<Text style={styles.role}>Administrator</Text>
+        <Text style={styles.name}>{userName}</Text>
+        <Text style={styles.role}>{userRole.toUpperCase()}</Text>
 
-				<View style={styles.infoRow}>
-					<Text style={styles.infoLabel}>Phone</Text>
-					<Text style={styles.infoValue}>+91 98765 43210</Text>
-				</View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Phone</Text>
+          <Text style={styles.infoValue}>{userPhone}</Text>
+        </View>
 
-				<View style={styles.infoRow}>
-					<Text style={styles.infoLabel}>Email</Text>
-					<Text style={styles.infoValue}>admin@example.com</Text>
-				</View>
-
-				<View style={styles.actions}>
-					<Pressable style={styles.actionBtn} onPress={() => {}}>
-						<Text style={styles.actionText}>Edit Profile</Text>
-					</Pressable>
-					<Pressable
-						style={[styles.actionBtn, styles.logoutBtn]}
-						onPress={() => router.replace("/(screens)/authentication")}
-					>
-						<Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
-					</Pressable>
-				</View>
-			</View>
-		</View>
-	);
+        <View style={styles.actions}>
+          <Pressable style={styles.actionBtn} onPress={() => { }}>
+            <Text style={styles.actionText}>Edit Profile</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, styles.logoutBtn]}
+            onPress={handleLogout}
+          >
+            <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
