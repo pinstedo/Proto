@@ -38,6 +38,10 @@ export default function Manage(): JSX.Element {
       router.push("/(screens)/sites");
       return;
     }
+    if (key === "advance") {
+      router.push("/(screens)/advance");
+      return;
+    }
     // navigate to dedicated management screen (ensure routes exist or create them)
     router.push(`/manage/${key}` as any);
   };

@@ -18,10 +18,12 @@ interface LabourCardProps {
     onMove?: (labour: Labour) => void;
     onTerminate?: (labour: Labour) => void;
     onBlacklist?: (labour: Labour) => void;
+    onRevoke?: (labour: Labour) => void;
+    onAdvance?: (labour: Labour) => void;
     showMoveAction?: boolean;
 }
 
-export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, showMoveAction = false }: LabourCardProps) => {
+export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke, onAdvance, showMoveAction = false }: LabourCardProps) => {
     const getStatusColor = (status?: string) => {
         switch (status) {
             case 'terminated': return '#e53935';
@@ -31,6 +33,8 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, showMoveA
     };
 
     const isActionable = labour.status !== 'terminated' && labour.status !== 'blacklisted';
+    const isTerminated = labour.status === 'terminated';
+    const isBlacklisted = labour.status === 'blacklisted';
 
     return (
         <View style={[
@@ -69,9 +73,9 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, showMoveA
                 </View>
             </View>
 
-            {showMoveAction && (
+            {(showMoveAction || onAdvance) && (
                 <View style={styles.actionRow}>
-                    {isActionable && (
+                    {isActionable && showMoveAction && (
                         <>
                             <TouchableOpacity
                                 style={styles.actionBtn}
@@ -98,10 +102,35 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, showMoveA
                             </TouchableOpacity>
                         </>
                     )}
-                    {!isActionable && (
-                        <Text style={{ color: '#999', fontSize: 13, fontStyle: 'italic' }}>
-                            Actions unavailable for {labour.status} labour
-                        </Text>
+
+                    {isActionable && onAdvance && (
+                        <TouchableOpacity
+                            style={styles.actionBtn}
+                            onPress={() => onAdvance(labour)}
+                        >
+                            <MaterialIcons name="attach-money" size={16} color="#2e7d32" />
+                            <Text style={[styles.actionBtnText, { color: '#2e7d32' }]}>Advance</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {isTerminated && showMoveAction && (
+                        <TouchableOpacity
+                            style={styles.actionBtn}
+                            onPress={() => onRevoke && onRevoke(labour)}
+                        >
+                            <MaterialIcons name="restore" size={16} color="#e53935" />
+                            <Text style={[styles.actionBtnText, { color: '#e53935' }]}>Revoke Termination</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {isBlacklisted && showMoveAction && (
+                        <TouchableOpacity
+                            style={styles.actionBtn}
+                            onPress={() => onRevoke && onRevoke(labour)}
+                        >
+                            <MaterialIcons name="restore" size={16} color="#333" />
+                            <Text style={[styles.actionBtnText, { color: '#333' }]}>Remove from Blacklist</Text>
+                        </TouchableOpacity>
                     )}
                 </View>
             )}

@@ -90,6 +90,10 @@ export default function SupervisorHome(): JSX.Element {
       router.push("/(screens)/labours");
       return;
     }
+    if (key === "advance") {
+      router.push("/(screens)/advance");
+      return;
+    }
     // navigate to dedicated management screen (ensure routes exist or create them)
     router.push(`/manage/${key}` as any);
   };

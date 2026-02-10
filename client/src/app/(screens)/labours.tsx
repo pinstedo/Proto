@@ -35,6 +35,7 @@ interface Labour {
 export default function Labours() {
 	const router = useRouter();
 	const { newLabour, supervisorId } = useLocalSearchParams();
+	const [viewType, setViewType] = useState<'active' | 'inactive'>('active');
 	const [labours, setLabours] = useState<Labour[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [isAdmin, setIsAdmin] = useState(false);
@@ -44,11 +45,10 @@ export default function Labours() {
 	const [selectedLabour, setSelectedLabour] = useState<Labour | null>(null);
 	const [sites, setSites] = useState<Site[]>([]);
 	const [assigning, setAssigning] = useState(false);
-
 	useFocusEffect(
 		useCallback(() => {
 			checkRoleAndFetch();
-		}, [supervisorId])
+		}, [supervisorId, viewType]) // Add viewType dependency
 	);
 
 	const checkRoleAndFetch = async () => {
@@ -57,7 +57,7 @@ export default function Labours() {
 			if (userDataStr) {
 				const userData = JSON.parse(userDataStr);
 				setIsAdmin(userData.role === "admin");
-				fetchLabours(userData.role === "supervisor" ? userData.id : supervisorId); // Use param if admin viewing supervisor
+				fetchLabours(userData.role === "supervisor" ? userData.id : supervisorId);
 				if (userData.role === "admin") {
 					fetchSites();
 				}
@@ -70,9 +70,9 @@ export default function Labours() {
 	const fetchLabours = async (supId?: string | string[]) => {
 		try {
 			setLoading(true);
-			let url = `${API_URL}/labours`;
+			let url = `${API_URL}/labours?status=${viewType}`; // Add status param
 			if (supId) {
-				url += `?supervisor_id=${supId}`;
+				url += `&supervisor_id=${supId}`;
 			}
 			const response = await fetch(url);
 			const data = await response.json();
@@ -193,6 +193,24 @@ export default function Labours() {
 				) : <View style={{ width: 50 }} />}
 			</View>
 
+			{/* Toggle for Active/Inactive - Only for Admins or if we want supervisors to see inactive? Limit to Admin for now based on context */}
+			{isAdmin && !supervisorId && (
+				<View style={local.toggleContainer}>
+					<TouchableOpacity
+						style={[local.toggleBtn, viewType === 'active' && local.toggleBtnActive]}
+						onPress={() => setViewType('active')}
+					>
+						<Text style={[local.toggleText, viewType === 'active' && local.toggleTextActive]}>Active</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={[local.toggleBtn, viewType === 'inactive' && local.toggleBtnActive]}
+						onPress={() => setViewType('inactive')}
+					>
+						<Text style={[local.toggleText, viewType === 'inactive' && local.toggleTextActive]}>Inactive</Text>
+					</TouchableOpacity>
+				</View>
+			)}
+
 			<FlatList
 				data={labours}
 				keyExtractor={(item) => item.id.toString()}
@@ -203,12 +221,13 @@ export default function Labours() {
 						onMove={handleMove}
 						onTerminate={handleTerminate}
 						onBlacklist={handleBlacklist}
+						onRevoke={(labour) => handleStatusChange(labour, 'active')}
 					/>
 				)}
 				contentContainerStyle={local.listContent}
 				ListEmptyComponent={
 					!loading ? (
-						<Text style={local.emptyText}>No labours found.</Text>
+						<Text style={local.emptyText}>No {viewType} labours found.</Text>
 					) : null
 				}
 			/>
@@ -339,4 +358,30 @@ const local = StyleSheet.create({
 		padding: 20,
 		color: "#666",
 	},
+	toggleContainer: {
+		flexDirection: 'row',
+		paddingHorizontal: 20,
+		marginBottom: 10,
+		backgroundColor: '#fff',
+		paddingBottom: 10,
+	},
+	toggleBtn: {
+		flex: 1,
+		paddingVertical: 10,
+		alignItems: 'center',
+		borderBottomWidth: 2,
+		borderBottomColor: 'transparent',
+	},
+	toggleBtnActive: {
+		borderBottomColor: '#0a84ff',
+	},
+	toggleText: {
+		fontSize: 16,
+		color: '#666',
+		fontWeight: '500',
+	},
+	toggleTextActive: {
+		color: '#0a84ff',
+		fontWeight: '700',
+	}
 });
