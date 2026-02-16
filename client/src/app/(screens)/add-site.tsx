@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 import { styles as globalStyles } from "../style/stylesheet";
 
 export default function AddSite() {
@@ -26,13 +26,7 @@ export default function AddSite() {
 
         try {
             const payload = { name, address, description };
-            const response = await fetch(`${API_URL}/sites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await api.post("/sites", payload);
 
             if (response.ok) {
                 Alert.alert("Success", "Site added successfully.", [

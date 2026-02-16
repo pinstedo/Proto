@@ -3,17 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { API_URL } from "../../constants";
+import { CustomModal, ModalType } from "../../components/CustomModal";
+import { api } from "../../services/api";
 import { styles as globalStyles, styles } from "../style/stylesheet";
 
 interface Site {
@@ -36,6 +35,23 @@ export default function AddLabour() {
   const [sites, setSites] = useState<Site[]>([]);
   const [showSitePicker, setShowSitePicker] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
+  const [modalConfig, setModalConfig] = useState<{
+    visible: boolean;
+    title?: string;
+    message?: string;
+    type?: ModalType;
+    actions?: any[];
+  }>({ visible: false });
+
+  const showModal = (title: string, message: string, type: ModalType = 'default', actions?: any[]) => {
+    setModalConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      actions: actions || [{ text: 'OK', onPress: () => setModalConfig(prev => ({ ...prev, visible: false })), style: 'default' }]
+    });
+  };
 
   useEffect(() => {
     loadUserAndSites();
@@ -62,14 +78,14 @@ export default function AddLabour() {
         // Fetch sites based on role
         if (userData.role === "admin") {
           // Admin can see all sites
-          const response = await fetch(`${API_URL}/sites`);
+          const response = await api.get("/sites");
           const data = await response.json();
           if (response.ok) {
             setSites(data);
           }
         } else if (userData.role === "supervisor") {
           // Supervisor sees only assigned sites
-          const response = await fetch(`${API_URL}/sites/supervisor/${userData.id}`);
+          const response = await api.get(`/sites/supervisor/${userData.id}`);
           const data = await response.json();
           if (response.ok) {
             setSites(data);
@@ -83,7 +99,7 @@ export default function AddLabour() {
 
   const onSubmit = async () => {
     if (!name.trim()) {
-      Alert.alert("Validation", "Please enter the labour name.");
+      showModal("Validation", "Please enter the labour name.", 'warning');
       return;
     }
 
@@ -99,25 +115,19 @@ export default function AddLabour() {
         trade: "General"
       };
 
-      const response = await fetch(`${API_URL}/labours`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await api.post("/labours", payload);
 
       if (response.ok) {
-        Alert.alert("Success", "Labour added successfully.", [
-          { text: "OK", onPress: () => router.back() },
+        showModal("Success", "Labour added successfully.", 'success', [
+          { text: "OK", onPress: () => { setModalConfig(prev => ({ ...prev, visible: false })); router.back(); }, style: 'default' },
         ]);
       } else {
         const errorData = await response.json();
-        Alert.alert("Error", errorData.error || "Failed to add labour");
+        showModal("Error", errorData.error || "Failed to add labour", 'error');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Failed to connect to server");
+      showModal("Error", "Failed to connect to server", 'error');
     }
   };
 
@@ -152,8 +162,12 @@ export default function AddLabour() {
           <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
         </TouchableOpacity>
 
-        <Text style={styles.labelname}>Hourly rate:</Text>
-        <TextInput style={local.input} value={rate} onChangeText={setRate} placeholder="e.g., 15.00" keyboardType="decimal-pad" />
+        {userRole !== 'supervisor' && (
+          <>
+            <Text style={styles.labelname}>Hourly rate:</Text>
+            <TextInput style={local.input} value={rate} onChangeText={setRate} placeholder="e.g., 15.00" keyboardType="decimal-pad" />
+          </>
+        )}
 
         <Text style={styles.labelname}>Notes:</Text>
         <TextInput style={[local.input, { height: 90 }]} value={notes} onChangeText={setNotes} placeholder="Optional notes" multiline />
@@ -168,59 +182,64 @@ export default function AddLabour() {
       </View>
 
       {/* Site Picker Modal */}
-      <Modal visible={showSitePicker} transparent animationType="slide">
-        <View style={local.modalOverlay}>
-          <View style={local.modalContent}>
-            <View style={local.modalHeader}>
-              <Text style={local.modalTitle}>Select Site</Text>
-              <TouchableOpacity onPress={() => setShowSitePicker(false)}>
-                <MaterialIcons name="close" size={24} color="#333" />
-              </TouchableOpacity>
+      <CustomModal
+        visible={showSitePicker}
+        onClose={() => setShowSitePicker(false)}
+        title="Select Site"
+        actions={[{ text: 'Cancel', onPress: () => setShowSitePicker(false), style: 'cancel' }]}
+      >
+        <View style={{ width: '100%', maxHeight: 300 }}>
+          {sites.length === 0 ? (
+            <View style={local.emptySites}>
+              <MaterialIcons name="location-off" size={48} color="#ccc" />
+              <Text style={local.emptySitesText}>
+                {userRole === "supervisor"
+                  ? "No sites assigned to you"
+                  : "No sites available. Create one first."}
+              </Text>
             </View>
-
-            {sites.length === 0 ? (
-              <View style={local.emptySites}>
-                <MaterialIcons name="location-off" size={48} color="#ccc" />
-                <Text style={local.emptySitesText}>
-                  {userRole === "supervisor"
-                    ? "No sites assigned to you"
-                    : "No sites available. Create one first."}
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={sites}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      local.siteOption,
-                      selectedSite?.id === item.id && local.siteOptionSelected
-                    ]}
-                    onPress={() => {
-                      setSelectedSite(item);
-                      setShowSitePicker(false);
-                    }}
-                  >
-                    <MaterialIcons
-                      name="location-city"
-                      size={20}
-                      color={selectedSite?.id === item.id ? "#0a84ff" : "#666"}
-                    />
-                    <View style={local.siteOptionInfo}>
-                      <Text style={local.siteOptionName}>{item.name}</Text>
-                      {item.address && <Text style={local.siteOptionAddress}>{item.address}</Text>}
-                    </View>
-                    {selectedSite?.id === item.id && (
-                      <MaterialIcons name="check-circle" size={24} color="#0a84ff" />
-                    )}
-                  </TouchableOpacity>
-                )}
-              />
-            )}
-          </View>
+          ) : (
+            <FlatList
+              data={sites}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    local.siteOption,
+                    selectedSite?.id === item.id && local.siteOptionSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedSite(item);
+                    setShowSitePicker(false);
+                  }}
+                >
+                  <MaterialIcons
+                    name="location-city"
+                    size={20}
+                    color={selectedSite?.id === item.id ? "#0a84ff" : "#666"}
+                  />
+                  <View style={local.siteOptionInfo}>
+                    <Text style={local.siteOptionName}>{item.name}</Text>
+                    {item.address && <Text style={local.siteOptionAddress}>{item.address}</Text>}
+                  </View>
+                  {selectedSite?.id === item.id && (
+                    <MaterialIcons name="check-circle" size={24} color="#0a84ff" />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          )}
         </View>
-      </Modal>
+      </CustomModal>
+
+      <CustomModal
+        visible={modalConfig.visible}
+        onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        actions={modalConfig.actions}
+      />
     </ScrollView>
   );
 }
@@ -294,32 +313,6 @@ const local = StyleSheet.create({
   submitText: {
     color: "#fff",
     fontWeight: "700",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
-    padding: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
   },
   emptySites: {
     alignItems: "center",

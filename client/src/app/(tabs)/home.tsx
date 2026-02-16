@@ -8,7 +8,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 import { styles as globalStyles } from "../style/stylesheet";
 
 export default function HomeScreen() {
@@ -35,11 +35,11 @@ export default function HomeScreen() {
 		useCallback(() => {
 			const fetchData = async () => {
 				try {
-					const statsRes = await fetch(`${API_URL}/dashboard/stats`);
+					const statsRes = await api.get("/dashboard/stats");
 					const statsData = await statsRes.json();
 					if (statsRes.ok) setStats(statsData);
 
-					const recentRes = await fetch(`${API_URL}/dashboard/recent`);
+					const recentRes = await api.get("/dashboard/recent");
 					const recentData = await recentRes.json();
 					if (recentRes.ok) setRecent(recentData);
 				} catch (error) {
@@ -54,7 +54,12 @@ export default function HomeScreen() {
 	const statsDisplay = [
 		{ key: "workers", label: "Workers", value: stats.workers },
 		{ key: "jobs", label: "Active workers", value: stats.jobs },
-		{ key: "attendance", label: "Today Present", value: stats.attendance },
+		{
+			key: "attendance",
+			label: "Today Present",
+			value: stats.attendance,
+			onPress: () => router.push("/(screens)/reports/site-attendance" as any),
+		},
 		{ key: "approvals", label: "Total site", value: stats.approvals },
 	];
 
@@ -90,10 +95,15 @@ export default function HomeScreen() {
 
 			<View style={local.cardsRow}>
 				{statsDisplay.map((s) => (
-					<View key={s.key} style={local.card}>
+					<TouchableOpacity
+						key={s.key}
+						style={local.card}
+						onPress={s.onPress}
+						disabled={!s.onPress}
+					>
 						<Text style={local.cardValue}>{s.value}</Text>
 						<Text style={local.cardLabel}>{s.label}</Text>
-					</View>
+					</TouchableOpacity>
 				))}
 			</View>
 
@@ -114,8 +124,11 @@ export default function HomeScreen() {
 						<Text style={local.actionText}>Add Supervisor</Text>
 					</TouchableOpacity>
 
-					<TouchableOpacity style={local.actionButton} onPress={() => { }}>
-						<Text style={local.actionText}>🗂 Generate Reports</Text>
+					<TouchableOpacity
+						style={[local.actionButton, { marginRight: 0 }]}
+						onPress={() => router.push("/(screens)/reports/labour_summary" as any)}
+					>
+						<Text style={local.actionText}>Reports</Text>
 					</TouchableOpacity>
 				</View>
 			</View>

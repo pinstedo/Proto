@@ -1,6 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
 import { API_URL } from "../../constants";
 import { styles } from "../style/stylesheet";
 
@@ -42,6 +43,11 @@ const App = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Store user data and token
+        await AsyncStorage.setItem("userData", JSON.stringify(data.user));
+        await AsyncStorage.setItem("token", data.accessToken);
+        await AsyncStorage.setItem("refreshToken", data.refreshToken);
+
         Alert.alert("Success", "Account created successfully!", [
           { text: "OK", onPress: () => router.replace("/(tabs)/home") },
         ]);
@@ -59,38 +65,47 @@ const App = () => {
   };
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.head1}>Welcome to rayan</Text>
-      <Text style={styles.head}>Sign up To continue</Text>
-      <Text style={styles.labelname}>Name</Text>
-      <TextInput
-        style={styles.valbox}
-        placeholder="muhammed fasal"
-        onChangeText={(text) => setName(text)}
-        value={name}
-      />
-      <Text style={styles.labelname}>Phone Number</Text>
-      <TextInput
-        style={styles.valbox}
-        onChangeText={(text) => setPhone(text)}
-        value={phone}
-        placeholder="Enter 10 digit phone number"
-        keyboardType="phone-pad"
-      />
-      <Text style={styles.labelname}>Password</Text>
-      <TextInput
-        style={styles.valbox}
-        onChangeText={(text) => setPassword(text)}
-        value={password}
-        secureTextEntry
-      />
-      <TouchableOpacity onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onPressSignInButton}>
-        <Text style={styles.linkstyle}>(Sign In)</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.head1}>Welcome to rayan</Text>
+        <Text style={styles.head}>Sign up To continue</Text>
+        <Text style={styles.labelname}>Name</Text>
+        <TextInput
+          style={styles.valbox}
+          placeholder="muhammed fasal"
+          onChangeText={(text) => setName(text)}
+          value={name}
+        />
+        <Text style={styles.labelname}>Phone Number</Text>
+        <TextInput
+          style={styles.valbox}
+          onChangeText={(text) => setPhone(text)}
+          value={phone}
+          placeholder="Enter 10 digit phone number"
+          keyboardType="phone-pad"
+        />
+        <Text style={styles.labelname}>Password</Text>
+        <TextInput
+          style={styles.valbox}
+          onChangeText={(text) => setPassword(text)}
+          value={password}
+          secureTextEntry
+        />
+        <TouchableOpacity onPress={handleSignUp}>
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onPressSignInButton}>
+          <Text style={styles.linkstyle}>(Sign In)</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -11,7 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 
 interface Supervisor {
     id: number;
@@ -27,7 +27,7 @@ export default function SupervisorsScreen() {
     const fetchSupervisors = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/auth/supervisors`);
+            const response = await api.get("/auth/supervisors");
             const data = await response.json();
 
             if (response.ok) {

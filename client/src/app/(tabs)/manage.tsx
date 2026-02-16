@@ -23,7 +23,7 @@ export default function Manage(): JSX.Element {
       return;
     }
     if (key === "attendance") {
-      router.push("/(screens)/attendance");
+      router.push("/(screens)/reports/site-attendance" as any);
       return;
     }
     if (key === "overtime") {

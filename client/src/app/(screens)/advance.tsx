@@ -17,6 +17,7 @@ import {
     View
 } from "react-native";
 import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 import { LabourCard } from "../components/LabourCard";
 
 interface Labour {
@@ -72,7 +73,7 @@ export default function Advance() {
             if (supId) {
                 url += `&supervisor_id=${supId}`;
             }
-            const response = await fetch(url);
+            const response = await api.fetch(url);
             const data = await response.json();
             if (response.ok) {
                 setLabours(data);
@@ -104,15 +105,11 @@ export default function Advance() {
 
         try {
             setSubmitting(true);
-            const response = await fetch(`${API_URL}/labours/${selectedLabour.id}/advance`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount: Number(amount),
-                    date: new Date().toISOString(), // Use current date/time
-                    notes: notes,
-                    created_by: currentUserId
-                }),
+            const response = await api.post(`/labours/${selectedLabour.id}/advance`, {
+                amount: Number(amount),
+                date: new Date().toISOString(), // Use current date/time
+                notes: notes,
+                created_by: currentUserId
             });
 
             const data = await response.json();
@@ -147,6 +144,7 @@ export default function Advance() {
                 renderItem={({ item }) => (
                     <LabourCard
                         labour={item}
+                        hideRate={!isAdmin}
                         onAdvance={handleOpenAdvance}
                     />
                 )}

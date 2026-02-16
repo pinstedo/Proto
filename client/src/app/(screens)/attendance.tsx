@@ -2,27 +2,11 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Calendar } from "../../components/Calendar";
+import { CustomModal, ModalType } from "../../components/CustomModal";
 import { API_URL } from "../../constants";
-
-// Simple custom date picker since we want to avoid extra dependencies if possible
-// or use a standard text input for date
-const DatePicker = ({ date, onDateChange }: { date: Date, onDateChange: (date: Date) => void }) => {
-	const formatDate = (date: Date) => {
-		return date.toISOString().split('T')[0];
-	};
-
-	// For simplicity in this proto, we'll just show today's date
-	// A real app would use a proper date picker library
-	return (
-		<View style={styles.dateContainer}>
-			<Text style={styles.dateLabel}>Date:</Text>
-			<View style={styles.dateDisplay}>
-				<Text style={styles.dateText}>{formatDate(date)}</Text>
-			</View>
-		</View>
-	);
-};
+import { api } from "../../services/api";
 
 interface Labour {
 	id: number;
@@ -40,7 +24,29 @@ export default function AttendanceScreen() {
 	const [submitting, setSubmitting] = useState(false);
 	const [date, setDate] = useState(new Date());
 	const [locked, setLocked] = useState(false);
+	const [foodProvided, setFoodProvided] = useState(false);
 	const [filter, setFilter] = useState<'all' | 'full' | 'half' | 'absent'>('all');
+
+	// State for calendar summary
+	const [markedDates, setMarkedDates] = useState<string[]>([]);
+	const [showCalendar, setShowCalendar] = useState(false);
+	const [modalConfig, setModalConfig] = useState<{
+		visible: boolean;
+		title?: string;
+		message?: string;
+		type?: ModalType;
+		actions?: any[];
+	}>({ visible: false });
+
+	const showModal = (title: string, message: string, type: ModalType = 'default', actions?: any[]) => {
+		setModalConfig({
+			visible: true,
+			title,
+			message,
+			type,
+			actions: actions || [{ text: 'OK', onPress: () => setModalConfig(prev => ({ ...prev, visible: false })), style: 'default' }]
+		});
+	};
 
 	const isGlobalView = !siteId;
 
@@ -65,26 +71,21 @@ export default function AttendanceScreen() {
 			setLoading(true);
 			let url = `${API_URL}/labours?status=active`;
 			if (siteId) {
-				// The backend /labours endpoint might not filter by siteId directly unless we update it or use /sites/:id/labours
-				// Validating previous code: line 58 used /sites/${siteId}/labours
 				url = `${API_URL}/sites/${siteId}/labours`;
-			} else {
-				// Global view: fetch all active labours
-				// url is already set to /labours?status=active
 			}
 
-			const response = await fetch(url);
+			const response = await api.fetch(url);
 			const data = await response.json();
 
 			if (response.ok) {
 				setLabours(data);
-				fetchExistingAttendance(data);
+				// fetchExistingAttendance(data); // Removed argument as it's not used in implementation, and useEffect calls it anyway
 			} else {
-				Alert.alert("Error", "Failed to fetch labours");
+				showModal("Error", "Failed to fetch labours", 'error');
 			}
 		} catch (error) {
 			console.error("Fetch labours error:", error);
-			Alert.alert("Error", error instanceof Error ? error.message : "Unable to connect to server");
+			showModal("Error", error instanceof Error ? error.message : "Unable to connect to server", 'error');
 		} finally {
 			setLoading(false);
 		}
@@ -93,26 +94,49 @@ export default function AttendanceScreen() {
 	const fetchLockStatus = async () => {
 		if (!siteId) return;
 		try {
-			const dateStr = date.toISOString().split('T')[0];
-			const response = await fetch(`${API_URL}/attendance/lock-status?site_id=${siteId}&date=${dateStr}`);
+			// Using local time date string for consistency with Calendar component
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const dateStr = `${year}-${month}-${day}`;
+
+			const response = await api.get(`/attendance/lock-status?site_id=${siteId}&date=${dateStr}`);
 			if (response.ok) {
 				const data = await response.json();
 				setLocked(data.is_locked);
+				setFoodProvided(data.food_provided);
 			}
 		} catch (error) {
 			console.error("Fetch lock status error:", error);
 		}
 	};
 
-	const fetchExistingAttendance = async (currentLabours?: Labour[]) => {
+	const fetchAttendanceSummary = async (month: number, year: number) => {
+		if (!siteId) return;
 		try {
-			const dateStr = date.toISOString().split('T')[0];
+			const response = await api.get(`/attendance/summary?site_id=${siteId}&month=${month}&year=${year}`);
+			if (response.ok) {
+				const data = await response.json();
+				setMarkedDates(data.dates || []);
+			}
+		} catch (error) {
+			console.error("Fetch summary error:", error);
+		}
+	};
+
+	const fetchExistingAttendance = async () => {
+		try {
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const dateStr = `${year}-${month}-${day}`;
+
 			let url = `${API_URL}/attendance?date=${dateStr}`;
 			if (siteId) {
 				url += `&site_id=${siteId}`;
 			}
 
-			const response = await fetch(url);
+			const response = await api.fetch(url);
 			const data = await response.json();
 
 			if (response.ok && Array.isArray(data)) {
@@ -121,6 +145,9 @@ export default function AttendanceScreen() {
 					newAttendance.set(record.labour_id, record.status);
 				});
 				setAttendance(newAttendance);
+			} else {
+				// If fetching fails or empty (new day), clear attendance map
+				setAttendance(new Map());
 			}
 		} catch (error) {
 			console.error("Fetch existing attendance error", error);
@@ -141,7 +168,7 @@ export default function AttendanceScreen() {
 		if (isGlobalView) return;
 
 		if (attendance.size === 0) {
-			Alert.alert("Warning", "No attendance marked.");
+			showModal("Warning", "No attendance marked.", 'warning');
 			return;
 		}
 
@@ -149,41 +176,45 @@ export default function AttendanceScreen() {
 			setSubmitting(true);
 			const userDataStr = await AsyncStorage.getItem("userData");
 			if (!userDataStr) {
-				Alert.alert("Error", "User session not found.");
+				showModal("Error", "User session not found.", 'error');
 				return;
 			}
 			const userData = JSON.parse(userDataStr);
+
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const dateStr = `${year}-${month}-${day}`;
 
 			const records = Array.from(attendance.entries()).map(([labourId, status]) => ({
 				labour_id: labourId,
 				site_id: siteId,
 				supervisor_id: userData.id,
-				date: date.toISOString().split('T')[0],
+				date: dateStr,
 				status
 			}));
 
-			const response = await fetch(`${API_URL}/attendance`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ records }),
-			});
+			const response = await api.post("/attendance", { records, food_provided: foodProvided });
 
 			if (response.ok) {
-				Alert.alert("Success", "Attendance marked successfully", [
+				showModal("Success", "Attendance marked successfully", 'success', [
 					{
 						text: "OK", onPress: () => {
+							setModalConfig(prev => ({ ...prev, visible: false }));
 							fetchLockStatus(); // Refresh lock status
-							router.back();
-						}
+							// Refresh calendar to show green
+							fetchAttendanceSummary(date.getMonth() + 1, date.getFullYear());
+						},
+						style: 'default'
 					}
 				]);
 			} else {
 				const data = await response.json();
-				Alert.alert("Error", data.error || "Failed to submit attendance");
+				showModal("Error", data.error || "Failed to submit attendance", 'error');
 			}
 		} catch (error) {
 			console.error("Submit attendance error:", error);
-			Alert.alert("Error", error instanceof Error ? error.message : "Unable to connect to server");
+			showModal("Error", error instanceof Error ? error.message : "Unable to connect to server", 'error');
 		} finally {
 			setSubmitting(false);
 		}
@@ -193,18 +224,13 @@ export default function AttendanceScreen() {
 		if (filter === 'all') return labours;
 		return labours.filter(l => {
 			const status = attendance.get(l.id);
-			if (filter === 'absent') return !status || status === 'absent'; // Treat undefined as absent for filter? Or strict? 
-			// Let's say undefined is "Not Marked", but user asked for Red=Absent. 
-			// Usually undefined means absent in these systems if not marked 'full' or 'half'.
-			// But for strict filtering:
+			if (filter === 'absent') return !status || status === 'absent';
 			return status === filter;
 		});
 	};
 
 	const renderItem = ({ item }: { item: Labour }) => {
 		const status = attendance.get(item.id);
-
-		// Global view read-only opacity
 		const itemLocked = locked || isGlobalView;
 
 		return (
@@ -246,6 +272,55 @@ export default function AttendanceScreen() {
 		);
 	};
 
+	const onDateSelect = (selectedDate: Date) => {
+		setDate(selectedDate);
+		setShowCalendar(false);
+	};
+
+	// Header component for FlatList to avoid nesting ScrollViews
+	const ListHeader = () => (
+		<View style={styles.subHeader}>
+			{isGlobalView ? (
+				<View style={styles.filterContainer}>
+					<Text style={styles.filterLabel}>Filter:</Text>
+					<Pressable onPress={() => setFilter(f => {
+						if (f === 'all') return 'full';
+						if (f === 'full') return 'half';
+						if (f === 'half') return 'absent';
+						return 'all';
+					})} style={styles.filterBtn}>
+						<Text style={styles.filterText}>{filter.toUpperCase()}</Text>
+					</Pressable>
+				</View>
+			) : (
+				<View>
+					<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+						<Text style={styles.siteName}>{decodeURIComponent(siteName as string)}</Text>
+
+						<Pressable
+							style={styles.dateSelector}
+							onPress={() => setShowCalendar(true)}
+						>
+							<MaterialIcons name="calendar-today" size={20} color="#0a84ff" />
+							<Text style={styles.dateSelectorText}>{date.toLocaleDateString()}</Text>
+						</Pressable>
+					</View>
+
+					<View style={styles.foodToggleContainer}>
+						<Text style={styles.foodToggleText}>Food Provided by Supervisor</Text>
+						<Switch
+							value={foodProvided}
+							onValueChange={(val) => { if (!locked) setFoodProvided(val); }}
+							disabled={locked}
+							trackColor={{ false: "#767577", true: "#81b0ff" }}
+							thumbColor={foodProvided ? "#0a84ff" : "#f4f3f4"}
+						/>
+					</View>
+				</View>
+			)}
+		</View>
+	);
+
 	return (
 		<View style={styles.container}>
 			<View style={styles.header}>
@@ -256,35 +331,43 @@ export default function AttendanceScreen() {
 				<View style={{ width: 24 }} />
 			</View>
 
-			<View style={styles.subHeader}>
-				{isGlobalView ? (
-					<View style={styles.filterContainer}>
-						<Text style={styles.filterLabel}>Filter:</Text>
-						<Pressable onPress={() => setFilter(f => {
-							if (f === 'all') return 'full';
-							if (f === 'full') return 'half';
-							if (f === 'half') return 'absent';
-							return 'all';
-						})} style={styles.filterBtn}>
-							<Text style={styles.filterText}>{filter.toUpperCase()}</Text>
-						</Pressable>
-					</View>
-				) : (
-					<Text style={styles.siteName}>{decodeURIComponent(siteName as string)}</Text>
-				)}
-				<DatePicker date={date} onDateChange={setDate} />
-			</View>
-
 			<FlatList
 				data={getFilteredLabours()}
 				renderItem={renderItem}
 				keyExtractor={(item) => item.id.toString()}
 				contentContainerStyle={styles.listContent}
+				ListHeaderComponent={ListHeader}
 				ListEmptyComponent={
 					!loading ? (
 						<Text style={styles.emptyText}>No labours found.</Text>
 					) : null
 				}
+			/>
+
+			<CustomModal
+				visible={showCalendar}
+				onClose={() => setShowCalendar(false)}
+				title="Select Date"
+				// type="date"
+				actions={[
+					{ text: "Cancel", onPress: () => setShowCalendar(false), style: "cancel" }
+				]}
+			>
+				<Calendar
+					selectedDate={date}
+					onDateSelect={onDateSelect}
+					markedDates={markedDates}
+					onMonthChange={fetchAttendanceSummary}
+				/>
+			</CustomModal>
+
+			<CustomModal
+				visible={modalConfig.visible}
+				onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+				title={modalConfig.title}
+				message={modalConfig.message}
+				type={modalConfig.type}
+				actions={modalConfig.actions}
 			/>
 
 			{!isGlobalView && (
@@ -330,34 +413,12 @@ const styles = StyleSheet.create({
 		padding: 16,
 		backgroundColor: "#fff",
 		marginTop: 1,
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
 	},
 	siteName: {
 		fontSize: 16,
 		fontWeight: "600",
 		color: "#0a84ff",
-	},
-	dateContainer: {
-		flexDirection: "row",
-		alignItems: "center",
-	},
-	dateLabel: {
-		fontSize: 14,
-		color: "#666",
-		marginRight: 8,
-	},
-	dateDisplay: {
-		paddingHorizontal: 12,
-		paddingVertical: 6,
-		backgroundColor: "#f0f0f0",
-		borderRadius: 6,
-	},
-	dateText: {
-		fontSize: 14,
-		fontWeight: "500",
-		color: "#333",
+		marginBottom: 8,
 	},
 	listContent: {
 		padding: 16,
@@ -465,4 +526,36 @@ const styles = StyleSheet.create({
 		marginTop: 2,
 		fontWeight: "500",
 	},
+	// New Styles
+	dateSelector: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		backgroundColor: '#e8f4ff',
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 8,
+		gap: 8,
+	},
+	dateSelectorText: {
+		fontSize: 14,
+		color: '#0a84ff',
+		fontWeight: '600',
+	},
+	foodToggleContainer: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		backgroundColor: '#fff',
+		paddingVertical: 8,
+		paddingHorizontal: 12,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: '#eee',
+	},
+	foodToggleText: {
+		fontSize: 14,
+		color: '#333',
+		flex: 1,
+		marginRight: 8,
+	}
 });

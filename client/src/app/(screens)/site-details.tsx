@@ -13,7 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 
 interface Supervisor {
     id: number;
@@ -53,7 +53,7 @@ export default function SiteDetailsScreen() {
     const fetchSiteDetails = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/sites/${id}`);
+            const response = await api.get(`/sites/${id}`);
             const data = await response.json();
 
             if (response.ok) {
@@ -74,7 +74,7 @@ export default function SiteDetailsScreen() {
 
     const fetchAvailableSupervisors = async () => {
         try {
-            const response = await fetch(`${API_URL}/auth/supervisors`);
+            const response = await api.get("/auth/supervisors");
             const data = await response.json();
             if (response.ok) {
                 // Filter out already assigned supervisors
@@ -95,14 +95,10 @@ export default function SiteDetailsScreen() {
 
     const handleUpdate = async () => {
         try {
-            const response = await fetch(`${API_URL}/sites/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: editName,
-                    address: editAddress,
-                    description: editDescription,
-                }),
+            const response = await api.put(`/sites/${id}`, {
+                name: editName,
+                address: editAddress,
+                description: editDescription,
             });
 
             if (response.ok) {
@@ -129,9 +125,7 @@ export default function SiteDetailsScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            const response = await fetch(`${API_URL}/sites/${id}`, {
-                                method: "DELETE",
-                            });
+                            const response = await api.delete(`/sites/${id}`);
 
                             if (response.ok) {
                                 Alert.alert("Success", "Site deleted", [
@@ -152,11 +146,7 @@ export default function SiteDetailsScreen() {
 
     const handleAssignSupervisor = async (supervisorId: number) => {
         try {
-            const response = await fetch(`${API_URL}/sites/${id}/assign`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ supervisor_id: supervisorId }),
-            });
+            const response = await api.post(`/sites/${id}/assign`, { supervisor_id: supervisorId });
 
             if (response.ok) {
                 Alert.alert("Success", "Supervisor assigned to site");
@@ -182,9 +172,8 @@ export default function SiteDetailsScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            const response = await fetch(
-                                `${API_URL}/sites/${id}/unassign/${supervisorId}`,
-                                { method: "DELETE" }
+                            const response = await api.delete(
+                                `/sites/${id}/unassign/${supervisorId}`
                             );
 
                             if (response.ok) {

@@ -21,9 +21,10 @@ interface LabourCardProps {
     onRevoke?: (labour: Labour) => void;
     onAdvance?: (labour: Labour) => void;
     showMoveAction?: boolean;
+    hideRate?: boolean;
 }
 
-export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke, onAdvance, showMoveAction = false }: LabourCardProps) => {
+export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke, onAdvance, showMoveAction = false, hideRate = false }: LabourCardProps) => {
     const getStatusColor = (status?: string) => {
         switch (status) {
             case 'terminated': return '#e53935';
@@ -54,12 +55,14 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke,
                     </View>
                     <Text style={styles.phone}>{labour.phone}</Text>
                 </View>
-                <View style={styles.rateContainer}>
-                    <Text style={styles.rateLabel}>Rate/hr</Text>
-                    <Text style={styles.rate}>
-                        {labour.rate ? `₹${Number(labour.rate).toFixed(2)}` : "-"}
-                    </Text>
-                </View>
+                {!hideRate && (
+                    <View style={styles.rateContainer}>
+                        <Text style={styles.rateLabel}>Rate/hr</Text>
+                        <Text style={styles.rate}>
+                            {labour.rate ? `₹${Number(labour.rate).toFixed(2)}` : "-"}
+                        </Text>
+                    </View>
+                )}
             </View>
 
             <View style={styles.detailsRow}>

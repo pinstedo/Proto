@@ -11,7 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 
 interface Site {
     id: number;
@@ -31,7 +31,7 @@ export default function SitesScreen() {
     const fetchSites = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/sites`);
+            const response = await api.get("/sites");
             const data = await response.json();
 
             if (response.ok) {

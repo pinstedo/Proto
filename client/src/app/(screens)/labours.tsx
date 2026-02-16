@@ -3,16 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-	Alert,
 	FlatList,
-	Modal,
 	Pressable,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View
 } from "react-native";
+import { CustomModal, ModalType } from "../../components/CustomModal";
 import { API_URL } from "../../constants";
+import { api } from "../../services/api";
 import { LabourCard } from "../components/LabourCard";
 
 interface Site {
@@ -45,6 +45,23 @@ export default function Labours() {
 	const [selectedLabour, setSelectedLabour] = useState<Labour | null>(null);
 	const [sites, setSites] = useState<Site[]>([]);
 	const [assigning, setAssigning] = useState(false);
+	const [modalConfig, setModalConfig] = useState<{
+		visible: boolean;
+		title?: string;
+		message?: string;
+		type?: ModalType;
+		actions?: any[];
+	}>({ visible: false });
+
+	const showModal = (title: string, message: string, type: ModalType = 'default', actions?: any[]) => {
+		setModalConfig({
+			visible: true,
+			title,
+			message,
+			type,
+			actions: actions || [{ text: 'OK', onPress: () => setModalConfig(prev => ({ ...prev, visible: false })), style: 'default' }]
+		});
+	};
 	useFocusEffect(
 		useCallback(() => {
 			checkRoleAndFetch();
@@ -74,7 +91,7 @@ export default function Labours() {
 			if (supId) {
 				url += `&supervisor_id=${supId}`;
 			}
-			const response = await fetch(url);
+			const response = await api.fetch(url);
 			const data = await response.json();
 			if (response.ok) {
 				setLabours(data);
@@ -88,7 +105,7 @@ export default function Labours() {
 
 	const fetchSites = async () => {
 		try {
-			const response = await fetch(`${API_URL}/sites`);
+			const response = await api.get("/sites");
 			const data = await response.json();
 			if (response.ok) {
 				setSites(data);
@@ -108,27 +125,23 @@ export default function Labours() {
 
 		try {
 			setAssigning(true);
-			const response = await fetch(`${API_URL}/labours/${selectedLabour.id}`, {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					...selectedLabour,
-					site: site.name,
-					site_id: site.id,
-				}),
+			const response = await api.put(`/labours/${selectedLabour.id}`, {
+				...selectedLabour,
+				site: site.name,
+				site_id: site.id,
 			});
 
 			if (response.ok) {
-				Alert.alert("Success", `Moved ${selectedLabour.name} to ${site.name}`);
+				showModal("Success", `Moved ${selectedLabour.name} to ${site.name}`, 'success');
 				setShowSitePicker(false);
 				fetchLabours(supervisorId); // Refresh list
 			} else {
 				const data = await response.json();
-				Alert.alert("Error", data.error || "Failed to move labour");
+				showModal("Error", data.error || "Failed to move labour", 'error');
 			}
 		} catch (error) {
 			console.error("Move labour error:", error);
-			Alert.alert("Error", "Unable to connect to server");
+			showModal("Error", "Unable to connect to server", 'error');
 		} finally {
 			setAssigning(false);
 		}
@@ -136,43 +149,55 @@ export default function Labours() {
 
 	const handleStatusChange = async (labour: Labour, newStatus: string) => {
 		try {
-			const response = await fetch(`${API_URL}/labours/${labour.id}/status`, {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ status: newStatus }),
-			});
+			const response = await api.put(`/labours/${labour.id}/status`, { status: newStatus });
 
 			if (response.ok) {
-				Alert.alert("Success", `Labour marked as ${newStatus}`);
+				showModal("Success", `Labour marked as ${newStatus}`, 'success');
 				fetchLabours(supervisorId); // Refresh list
 			} else {
 				const data = await response.json();
-				Alert.alert("Error", data.error || "Failed to update status");
+				showModal("Error", data.error || "Failed to update status", 'error');
 			}
 		} catch (error) {
 			console.error("Status update error:", error);
-			Alert.alert("Error", "Unable to connect to server");
+			showModal("Error", "Unable to connect to server", 'error');
 		}
 	};
 
 	const handleTerminate = (labour: Labour) => {
-		Alert.alert(
+		showModal(
 			"Confirm Terminate",
 			`Are you sure you want to terminate ${labour.name}?`,
+			'confirmation',
 			[
-				{ text: "Cancel", style: "cancel" },
-				{ text: "Terminate", style: "destructive", onPress: () => handleStatusChange(labour, 'terminated') }
+				{ text: "Cancel", onPress: () => setModalConfig(prev => ({ ...prev, visible: false })), style: "cancel" },
+				{
+					text: "Terminate",
+					onPress: () => {
+						setModalConfig(prev => ({ ...prev, visible: false }));
+						handleStatusChange(labour, 'terminated');
+					},
+					style: "destructive"
+				}
 			]
 		);
 	};
 
 	const handleBlacklist = (labour: Labour) => {
-		Alert.alert(
+		showModal(
 			"Confirm Blacklist",
 			`Are you sure you want to blacklist ${labour.name}?`,
+			'confirmation',
 			[
-				{ text: "Cancel", style: "cancel" },
-				{ text: "Blacklist", style: "destructive", onPress: () => handleStatusChange(labour, 'blacklisted') }
+				{ text: "Cancel", onPress: () => setModalConfig(prev => ({ ...prev, visible: false })), style: "cancel" },
+				{
+					text: "Blacklist",
+					onPress: () => {
+						setModalConfig(prev => ({ ...prev, visible: false }));
+						handleStatusChange(labour, 'blacklisted');
+					},
+					style: "destructive"
+				}
 			]
 		);
 	};
@@ -218,6 +243,7 @@ export default function Labours() {
 					<LabourCard
 						labour={item}
 						showMoveAction={isAdmin}
+						hideRate={!isAdmin}
 						onMove={handleMove}
 						onTerminate={handleTerminate}
 						onBlacklist={handleBlacklist}
@@ -233,53 +259,55 @@ export default function Labours() {
 			/>
 
 			{/* Site Picker Modal */}
-			<Modal visible={showSitePicker} transparent animationType="slide">
-				<View style={local.modalOverlay}>
-					<View style={local.modalContent}>
-						<View style={local.modalHeader}>
-							<Text style={local.modalTitle}>
-								Move {selectedLabour?.name} to...
-							</Text>
-							<TouchableOpacity onPress={() => setShowSitePicker(false)}>
-								<MaterialIcons name="close" size={24} color="#333" />
-							</TouchableOpacity>
-						</View>
-
-						{assigning ? (
-							<Text style={local.loadingText}>Assigning...</Text>
-						) : (
-							<FlatList
-								data={sites}
-								style={{ maxHeight: 300 }}
-								keyExtractor={(item) => item.id.toString()}
-								renderItem={({ item }) => (
-									<TouchableOpacity
-										style={local.siteOption}
-										onPress={() => handleAssignSite(item)}
-									>
-										<MaterialIcons
-											name="location-city"
-											size={20}
-											color={selectedLabour?.site_id === item.id ? "#0a84ff" : "#666"}
-										/>
-										<Text
-											style={[
-												local.siteOptionName,
-												selectedLabour?.site_id === item.id && { color: "#0a84ff", fontWeight: "600" },
-											]}
-										>
-											{item.name}
-										</Text>
-										{selectedLabour?.site_id === item.id && (
-											<MaterialIcons name="check" size={20} color="#0a84ff" />
-										)}
-									</TouchableOpacity>
+			{/* Site Picker Modal */}
+			<CustomModal
+				visible={showSitePicker}
+				onClose={() => setShowSitePicker(false)}
+				title={`Move ${selectedLabour?.name} to...`}
+				actions={[{ text: 'Cancel', onPress: () => setShowSitePicker(false), style: 'cancel' }]}
+			>
+				{assigning ? (
+					<Text style={local.loadingText}>Assigning...</Text>
+				) : (
+					<FlatList
+						data={sites}
+						style={{ maxHeight: 300, width: '100%' }}
+						keyExtractor={(item) => item.id.toString()}
+						renderItem={({ item }) => (
+							<TouchableOpacity
+								style={local.siteOption}
+								onPress={() => handleAssignSite(item)}
+							>
+								<MaterialIcons
+									name="location-city"
+									size={20}
+									color={selectedLabour?.site_id === item.id ? "#0a84ff" : "#666"}
+								/>
+								<Text
+									style={[
+										local.siteOptionName,
+										selectedLabour?.site_id === item.id && { color: "#0a84ff", fontWeight: "600" },
+									]}
+								>
+									{item.name}
+								</Text>
+								{selectedLabour?.site_id === item.id && (
+									<MaterialIcons name="check" size={20} color="#0a84ff" />
 								)}
-							/>
+							</TouchableOpacity>
 						)}
-					</View>
-				</View>
-			</Modal>
+					/>
+				)}
+			</CustomModal>
+
+			<CustomModal
+				visible={modalConfig.visible}
+				onClose={() => setModalConfig(prev => ({ ...prev, visible: false }))}
+				title={modalConfig.title}
+				message={modalConfig.message}
+				type={modalConfig.type}
+				actions={modalConfig.actions}
+			/>
 		</View>
 	);
 }
@@ -313,32 +341,6 @@ const local = StyleSheet.create({
 		marginTop: 40,
 		color: "#999",
 		fontSize: 16,
-	},
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: "rgba(0,0,0,0.5)",
-		justifyContent: "flex-end",
-	},
-	modalContent: {
-		backgroundColor: "#fff",
-		borderTopLeftRadius: 20,
-		borderTopRightRadius: 20,
-		padding: 20,
-		maxHeight: "80%",
-	},
-	modalHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		marginBottom: 16,
-		paddingBottom: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#eee",
-	},
-	modalTitle: {
-		fontSize: 18,
-		fontWeight: "600",
-		color: "#333",
 	},
 	siteOption: {
 		flexDirection: "row",
