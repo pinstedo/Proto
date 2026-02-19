@@ -104,6 +104,9 @@ const App = () => {
         <TouchableOpacity onPress={onPressSignInButton}>
           <Text style={styles.linkstyle}>(Sign In)</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/auth/labour-login" as any)}>
+          <Text style={styles.linkstyle}>(Labour Login)</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );

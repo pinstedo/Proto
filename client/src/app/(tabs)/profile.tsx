@@ -1,27 +1,36 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUser = async (isRefresh = false) => {
+    try {
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error("Failed to load user data", error);
+    } finally {
+      if (isRefresh) setRefreshing(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
-      const fetchUser = async () => {
-        try {
-          const userData = await AsyncStorage.getItem("userData");
-          if (userData) {
-            setUser(JSON.parse(userData));
-          }
-        } catch (error) {
-          console.error("Failed to load user data", error);
-        }
-      };
       fetchUser();
     }, [])
   );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchUser(true);
+  };
 
   const handleLogout = async () => {
     try {
@@ -54,7 +63,12 @@ export default function Profile() {
         </Pressable>
       </View>
 
-      <View style={styles.body}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+        }
+      >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
@@ -78,7 +92,7 @@ export default function Profile() {
             <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }

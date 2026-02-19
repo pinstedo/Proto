@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { JSX, useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { api } from "../../../services/api";
 import { styles } from "../../style/stylesheet1";
 
@@ -16,7 +16,6 @@ interface Site {
 const options = [
     { key: "attendance", icon: "check-circle", title: "Attendance", desc: "Record and view attendance" },
     { key: "labours", icon: "group", title: "Labours", desc: "View assigned labours" },
-    { key: "allowance", icon: "attach-money", title: "Allowance", desc: "Manage allowances" },
     { key: "overtime", icon: "timer", title: "Overtime", desc: "Log overtime hours" },
     { key: "advance", icon: "account-balance-wallet", title: "Advance", desc: "Manage advances" },
     { key: "add-labour", icon: "person-add", title: "Add Labours", desc: "Add new labours to the system" },
@@ -27,10 +26,15 @@ export default function SupervisorHome(): JSX.Element {
     const [assignedSites, setAssignedSites] = useState<Site[]>([]);
     const [selectedSite, setSelectedSite] = useState<Site | null>(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const fetchAssignedSites = async () => {
+    const fetchAssignedSites = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             // Get supervisor ID from stored user data
             const userDataStr = await AsyncStorage.getItem("userData");
             if (!userDataStr) {
@@ -54,7 +58,12 @@ export default function SupervisorHome(): JSX.Element {
             console.error("Fetch assigned sites error:", error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        fetchAssignedSites(true);
     };
 
     useFocusEffect(
@@ -100,7 +109,12 @@ export default function SupervisorHome(): JSX.Element {
 
     return (
         <View style={styles.mainContainer}>
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView
+                contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+                }
+            >
                 <Text style={styles.header}>Supervisor Dashboard</Text>
 
                 {/* Site Selector */}

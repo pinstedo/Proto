@@ -7,11 +7,12 @@ import {
     Alert,
     FlatList,
     Modal,
+    RefreshControl,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { api } from "../../services/api";
 
@@ -49,10 +50,15 @@ export default function SiteDetailsScreen() {
     const [editDescription, setEditDescription] = useState("");
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [availableSupervisors, setAvailableSupervisors] = useState<Supervisor[]>([]);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const fetchSiteDetails = async () => {
+    const fetchSiteDetails = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const response = await api.get(`/sites/${id}`);
             const data = await response.json();
 
@@ -69,7 +75,12 @@ export default function SiteDetailsScreen() {
             Alert.alert("Error", "Unable to connect to server");
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        fetchSiteDetails(true);
     };
 
     const fetchAvailableSupervisors = async () => {
@@ -324,6 +335,9 @@ export default function SiteDetailsScreen() {
                         </TouchableOpacity>
                     </View>
                 )}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+                }
             />
 
             {/* Assign Supervisor Modal */}

@@ -34,11 +34,13 @@ interface Labour {
 
 export default function Labours() {
 	const router = useRouter();
-	const { newLabour, supervisorId } = useLocalSearchParams();
-	const [viewType, setViewType] = useState<'active' | 'inactive'>('active');
+	const { newLabour, supervisorId, status } = useLocalSearchParams();
+	const [viewType, setViewType] = useState<'active' | 'inactive'>((status as 'active' | 'inactive') || 'active');
 	const [labours, setLabours] = useState<Labour[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [isAdmin, setIsAdmin] = useState(false);
+
+	const [refreshing, setRefreshing] = useState(false);
 
 	// Assignment Modal State
 	const [showSitePicker, setShowSitePicker] = useState(false);
@@ -84,9 +86,13 @@ export default function Labours() {
 		}
 	};
 
-	const fetchLabours = async (supId?: string | string[]) => {
+	const fetchLabours = async (supId?: string | string[], isRefresh = false) => {
 		try {
-			setLoading(true);
+			if (isRefresh) {
+				setRefreshing(true);
+			} else {
+				setLoading(true);
+			}
 			let url = `${API_URL}/labours?status=${viewType}`; // Add status param
 			if (supId) {
 				url += `&supervisor_id=${supId}`;
@@ -100,7 +106,12 @@ export default function Labours() {
 			console.error("Failed to fetch labours", error);
 		} finally {
 			setLoading(false);
+			setRefreshing(false);
 		}
+	};
+
+	const onRefresh = () => {
+		checkRoleAndFetch(); // This will eventually call fetchLabours
 	};
 
 	const fetchSites = async () => {
@@ -239,6 +250,13 @@ export default function Labours() {
 			<FlatList
 				data={labours}
 				keyExtractor={(item) => item.id.toString()}
+				refreshControl={
+					<React.Fragment>
+						{/* Re-import RefreshControl if not already imported or use from react-native */}
+					</React.Fragment>
+				}
+				onRefresh={onRefresh}
+				refreshing={refreshing}
 				renderItem={({ item }) => (
 					<LabourCard
 						labour={item}
@@ -248,6 +266,7 @@ export default function Labours() {
 						onTerminate={handleTerminate}
 						onBlacklist={handleBlacklist}
 						onRevoke={(labour) => handleStatusChange(labour, 'active')}
+						onPress={(labour) => router.push(`/(screens)/labour-details?id=${labour.id}`)}
 					/>
 				)}
 				contentContainerStyle={local.listContent}
@@ -258,7 +277,6 @@ export default function Labours() {
 				}
 			/>
 
-			{/* Site Picker Modal */}
 			{/* Site Picker Modal */}
 			<CustomModal
 				visible={showSitePicker}

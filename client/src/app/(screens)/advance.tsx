@@ -9,6 +9,7 @@ import {
     Modal,
     Platform,
     Pressable,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -52,6 +53,8 @@ export default function Advance() {
         }, [supervisorId])
     );
 
+    const [refreshing, setRefreshing] = useState(false);
+
     const checkRoleAndFetch = async () => {
         try {
             const userDataStr = await AsyncStorage.getItem("userData");
@@ -66,9 +69,13 @@ export default function Advance() {
         }
     };
 
-    const fetchLabours = async (supId?: string | string[]) => {
+    const fetchLabours = async (supId?: string | string[], isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             let url = `${API_URL}/labours?status=active`; // Only active labours can get advances
             if (supId) {
                 url += `&supervisor_id=${supId}`;
@@ -82,7 +89,12 @@ export default function Advance() {
             console.error("Failed to fetch labours", error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        checkRoleAndFetch();
     };
 
     const handleOpenAdvance = (labour: Labour) => {
@@ -153,6 +165,9 @@ export default function Advance() {
                     !loading ? (
                         <Text style={local.emptyText}>No active labours found.</Text>
                     ) : null
+                }
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
                 }
             />
 

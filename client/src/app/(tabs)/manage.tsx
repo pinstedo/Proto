@@ -6,11 +6,10 @@ import { styles } from "../style/stylesheet1";
 
 const options = [
   { key: "attendance", icon: "check-circle", title: "Attendance", desc: "Record and view attendance" },
-  { key: "allowance", icon: "attach-money", title: "Allowance", desc: "Manage allowances" },
   { key: "overtime", icon: "timer", title: "Overtime", desc: "Log overtime hours" },
   { key: "advance", icon: "account-balance-wallet", title: "Advance", desc: "Manage advances" },
   { key: "sites", icon: "location-city", title: "Sites", desc: "Manage job sites" },
-  { key: "add-labour", icon: "person-add", title: "Add Labours", desc: "Add new labours to the system" },
+  { key: "labours", icon: "group", title: "Labours", desc: "View and manage labours" },
   { key: "supervisors", icon: "supervisor-account", title: "Supervisors", desc: "View supervisors added by admin" },
 ];
 
@@ -18,8 +17,8 @@ export default function Manage(): JSX.Element {
   const router = useRouter();
 
   const onPress = (key: string) => {
-    if (key === "add-labour") {
-      router.push("/(screens)/add-labour");
+    if (key === "labours") {
+      router.push("/(screens)/labours");
       return;
     }
     if (key === "attendance") {

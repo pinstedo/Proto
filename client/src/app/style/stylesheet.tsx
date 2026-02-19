@@ -99,4 +99,38 @@ export const styles = StyleSheet.create({
     textDecorationLine: "underline",
     marginTop: 10,
   },
+  header: {
+    backgroundColor: '#eb9834',
+    padding: 15,
+    paddingTop: 40,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginBottom: 10,
+  },
 });

@@ -95,6 +95,71 @@ async function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(labour_id, date)
     );
+
+    -- Daily Site Attendance Status table
+    CREATE TABLE IF NOT EXISTS daily_site_attendance_status (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      site_id INTEGER NOT NULL REFERENCES sites(id),
+      date TEXT NOT NULL,
+      is_locked BOOLEAN DEFAULT 0,
+      food_provided BOOLEAN DEFAULT 0,
+      submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      submitted_by INTEGER REFERENCES users(id),
+      UNIQUE(site_id, date)
+    );
+  `);
+
+  // Try to add food_provided column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE daily_site_attendance_status ADD COLUMN food_provided BOOLEAN DEFAULT 0`);
+  } catch (e) {
+    // Column probably already exists
+  }
+
+  await db.exec(`
+    -- Advances table
+    CREATE TABLE IF NOT EXISTS advances (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      labour_id INTEGER NOT NULL REFERENCES labours(id) ON DELETE CASCADE,
+      amount REAL NOT NULL,
+      date TEXT NOT NULL,
+      notes TEXT,
+      created_by INTEGER REFERENCES users(id),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Refresh Tokens table
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token TEXT NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      revoked BOOLEAN DEFAULT 0
+    );
+
+    -- Overtime table
+    CREATE TABLE IF NOT EXISTS overtime (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        labour_id INTEGER NOT NULL REFERENCES labours(id) ON DELETE CASCADE,
+        site_id INTEGER NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+        hours REAL NOT NULL,
+        amount REAL NOT NULL,
+        date TEXT NOT NULL,
+        notes TEXT,
+        created_by INTEGER REFERENCES users(id),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Labour Refresh Tokens table
+    CREATE TABLE IF NOT EXISTS labour_refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      labour_id INTEGER NOT NULL REFERENCES labours(id) ON DELETE CASCADE,
+      token TEXT NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      revoked BOOLEAN DEFAULT 0
+    );
   `);
 
   console.log('Database initialized.');

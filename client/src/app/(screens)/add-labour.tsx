@@ -1,5 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -34,6 +35,8 @@ export default function AddLabour() {
 
   const [sites, setSites] = useState<Site[]>([]);
   const [showSitePicker, setShowSitePicker] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
   const [modalConfig, setModalConfig] = useState<{
     visible: boolean;
@@ -97,9 +100,32 @@ export default function AddLabour() {
     }
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   const onSubmit = async () => {
     if (!name.trim()) {
       showModal("Validation", "Please enter the labour name.", 'warning');
+      return;
+    }
+
+    if (!phone || phone.length !== 10) {
+      showModal("Validation", "Please enter a valid 10-digit phone number.", 'warning');
+      return;
+    }
+
+    if (aadhaar && aadhaar.length !== 12) {
+      showModal("Validation", "Aadhaar number must be 12 digits.", 'warning');
+      return;
+    }
+
+    if (userRole !== 'supervisor' && (!rate || isNaN(parseFloat(rate)) || parseFloat(rate) <= 0)) {
+      showModal("Validation", "Please enter a valid positive hourly rate.", 'warning');
       return;
     }
 
@@ -112,7 +138,8 @@ export default function AddLabour() {
         site_id: selectedSite?.id || null,
         rate,
         notes,
-        trade: "General"
+        trade: "General",
+        date_of_birth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : null
       };
 
       const response = await api.post("/labours", payload);
@@ -140,13 +167,32 @@ export default function AddLabour() {
 
       <View style={local.form}>
         <Text style={styles.labelname}>Full name:</Text>
-        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="abhishek" />
+        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="full name" />
 
         <Text style={styles.labelname}>Phone:</Text>
-        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" keyboardType="phone-pad" />
+        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" keyboardType="phone-pad" maxLength={10} />
 
         <Text style={styles.labelname}>Aadhaar number:</Text>
-        <TextInput style={local.input} value={aadhaar} onChangeText={setAadhaar} placeholder="" keyboardType="phone-pad" />
+        <TextInput style={local.input} value={aadhaar} onChangeText={setAadhaar} placeholder="" keyboardType="phone-pad" maxLength={12} />
+
+        <Text style={styles.labelname}>Date of Birth:</Text>
+        <TouchableOpacity style={local.input} onPress={() => setShowDatePicker(true)}>
+          <Text style={{ color: dateOfBirth ? "#000" : "#999", paddingVertical: 4 }}>
+            {dateOfBirth ? formatDate(dateOfBirth) : "Select Date of Birth"}
+          </Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dateOfBirth || new Date()}
+            mode="date"
+            display="default"
+            onChange={(event: any, selectedDate?: Date) => {
+              setShowDatePicker(false);
+              if (selectedDate) setDateOfBirth(selectedDate);
+            }}
+            maximumDate={new Date()}
+          />
+        )}
 
         <Text style={styles.labelname}>Job site:</Text>
         <TouchableOpacity

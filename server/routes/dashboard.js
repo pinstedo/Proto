@@ -3,16 +3,24 @@ const { openDb } = require('../database');
 
 const router = express.Router();
 
-router.get('/stats', async (req, res) => {
+const { authorizeRole } = require('../middleware/auth');
+
+router.get('/stats', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
 
-        const workersCount = await db.get('SELECT COUNT(*) as count FROM labours');
-        const activeWorkersCount = await db.get('SELECT COUNT(*) as count FROM labours WHERE site_id IS NOT NULL');
+        const workersCount = await db.get("SELECT COUNT(*) as count FROM labours WHERE status NOT IN ('terminated', 'blacklisted')");
+        const activeWorkersCount = await db.get("SELECT COUNT(*) as count FROM labours WHERE site_id IS NOT NULL AND status = 'active'");
         const sitesCount = await db.get('SELECT COUNT(*) as count FROM sites');
 
-        // Placeholder for attendance until implemented
-        const presentCount = { count: 0 };
+        // Get today's date in YYYY-MM-DD format to match attendance records
+        const today = new Date().toISOString().split('T')[0];
+
+        const presentCount = await db.get(
+            `SELECT COUNT(*) as count FROM attendance 
+             WHERE date = ? AND status IN ('full', 'half')`,
+            [today]
+        );
 
         res.json({
             workers: workersCount.count,
@@ -25,7 +33,7 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-router.get('/recent', async (req, res) => {
+router.get('/recent', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
 

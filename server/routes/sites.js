@@ -3,8 +3,10 @@ const { openDb } = require('../database');
 
 const router = express.Router();
 
+const { authorizeRole } = require('../middleware/auth');
+
 // List all sites
-router.get('/', async (req, res) => {
+router.get('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         const sites = await db.all(`
@@ -25,7 +27,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get sites assigned to a supervisor - MUST be before /:id route
-router.get('/supervisor/:supervisorId', async (req, res) => {
+router.get('/supervisor/:supervisorId', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         const sites = await db.all(`
@@ -42,7 +44,7 @@ router.get('/supervisor/:supervisorId', async (req, res) => {
 });
 
 // Create new site
-router.post('/', async (req, res) => {
+router.post('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     const { name, address, description, created_by } = req.body;
 
     if (!name) {
@@ -64,7 +66,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get site details with assigned supervisors
-router.get('/:id', async (req, res) => {
+router.get('/:id', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         const site = await db.get('SELECT * FROM sites WHERE id = ?', [req.params.id]);
@@ -83,7 +85,7 @@ router.get('/:id', async (req, res) => {
 
         // Get labours at this site
         const labours = await db.all(`
-            SELECT * FROM labours WHERE site_id = ?
+            SELECT * FROM labours WHERE site_id = ? AND status = 'active'
         `, [req.params.id]);
 
         res.json({ ...site, supervisors, labours });
@@ -93,7 +95,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update site
-router.put('/:id', async (req, res) => {
+router.put('/:id', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     const { name, address, description } = req.body;
 
     try {
@@ -111,7 +113,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete site
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         await db.run('DELETE FROM sites WHERE id = ?', [req.params.id]);
@@ -122,7 +124,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Assign supervisor to site
-router.post('/:id/assign', async (req, res) => {
+router.post('/:id/assign', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     const { supervisor_id } = req.body;
 
     if (!supervisor_id) {
@@ -157,7 +159,7 @@ router.post('/:id/assign', async (req, res) => {
 });
 
 // Remove supervisor from site
-router.delete('/:id/unassign/:supervisorId', async (req, res) => {
+router.delete('/:id/unassign/:supervisorId', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         await db.run(
@@ -171,11 +173,11 @@ router.delete('/:id/unassign/:supervisorId', async (req, res) => {
 });
 
 // Get labours for a specific site
-router.get('/:id/labours', async (req, res) => {
+router.get('/:id/labours', authorizeRole(['admin', 'supervisor']), async (req, res) => {
     try {
         const db = await openDb();
         const labours = await db.all(
-            'SELECT * FROM labours WHERE site_id = ? ORDER BY created_at DESC',
+            "SELECT * FROM labours WHERE site_id = ? AND status = 'active' ORDER BY created_at DESC",
             [req.params.id]
         );
         res.json(labours);

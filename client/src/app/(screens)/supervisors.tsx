@@ -6,10 +6,11 @@ import {
     ActivityIndicator,
     Alert,
     FlatList,
+    RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { api } from "../../services/api";
 
@@ -23,10 +24,15 @@ export default function SupervisorsScreen() {
     const router = useRouter();
     const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const fetchSupervisors = async () => {
+    const fetchSupervisors = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const response = await api.get("/auth/supervisors");
             const data = await response.json();
 
@@ -40,7 +46,12 @@ export default function SupervisorsScreen() {
             Alert.alert("Error", "Unable to connect to server");
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        fetchSupervisors(true);
     };
 
     useFocusEffect(
@@ -50,7 +61,13 @@ export default function SupervisorsScreen() {
     );
 
     const renderSupervisor = ({ item }: { item: Supervisor }) => (
-        <View style={styles.card}>
+        <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push({
+                pathname: "/(screens)/supervisor-details",
+                params: { id: item.id, name: item.name, phone: item.phone }
+            })}
+        >
             <View style={styles.iconWrap}>
                 <MaterialIcons name="person" size={24} color="#0a84ff" />
             </View>
@@ -58,7 +75,8 @@ export default function SupervisorsScreen() {
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.phone}>{item.phone}</Text>
             </View>
-        </View>
+            <MaterialIcons name="chevron-right" size={24} color="#ccc" />
+        </TouchableOpacity>
     );
 
     return (
@@ -95,6 +113,9 @@ export default function SupervisorsScreen() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={renderSupervisor}
                     contentContainerStyle={styles.list}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+                    }
                 />
             )}
         </View>

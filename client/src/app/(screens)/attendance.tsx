@@ -2,7 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from "react-native";
 import { Calendar } from "../../components/Calendar";
 import { CustomModal, ModalType } from "../../components/CustomModal";
 import { API_URL } from "../../constants";
@@ -26,6 +26,7 @@ export default function AttendanceScreen() {
 	const [locked, setLocked] = useState(false);
 	const [foodProvided, setFoodProvided] = useState(false);
 	const [filter, setFilter] = useState<'all' | 'full' | 'half' | 'absent'>('all');
+	const [refreshing, setRefreshing] = useState(false);
 
 	// State for calendar summary
 	const [markedDates, setMarkedDates] = useState<string[]>([]);
@@ -66,9 +67,9 @@ export default function AttendanceScreen() {
 		fetchExistingAttendance();
 	}, [date]);
 
-	const fetchLabours = async () => {
+	const fetchLabours = async (isRefresh = false) => {
 		try {
-			setLoading(true);
+			if (!isRefresh) setLoading(true);
 			let url = `${API_URL}/labours?status=active`;
 			if (siteId) {
 				url = `${API_URL}/sites/${siteId}/labours`;
@@ -87,7 +88,7 @@ export default function AttendanceScreen() {
 			console.error("Fetch labours error:", error);
 			showModal("Error", error instanceof Error ? error.message : "Unable to connect to server", 'error');
 		} finally {
-			setLoading(false);
+			if (!isRefresh) setLoading(false);
 		}
 	};
 
@@ -152,7 +153,20 @@ export default function AttendanceScreen() {
 		} catch (error) {
 			console.error("Fetch existing attendance error", error);
 		}
-	}
+	};
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		try {
+			await Promise.all([
+				fetchLabours(true),
+				fetchExistingAttendance(),
+				!isGlobalView ? fetchLockStatus() : Promise.resolve()
+			]);
+		} finally {
+			setRefreshing(false);
+		}
+	};
 
 	const handleStatusChange = (labourId: number, status: 'full' | 'half' | 'absent') => {
 		if (isGlobalView) return; // Read-only in global view
@@ -341,6 +355,9 @@ export default function AttendanceScreen() {
 					!loading ? (
 						<Text style={styles.emptyText}>No labours found.</Text>
 					) : null
+				}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
 				}
 			/>
 

@@ -1,12 +1,13 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+	RefreshControl,
 	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
-	View,
+	View
 } from "react-native";
 import { api } from "../../services/api";
 import { styles as globalStyles } from "../style/stylesheet";
@@ -30,37 +31,61 @@ export default function HomeScreen() {
 	});
 
 	const [recent, setRecent] = useState<string[]>([]);
+	const [refreshing, setRefreshing] = useState(false);
+
+	const fetchData = async (isRefresh = false) => {
+		try {
+			// Don't set loading state for refresh to avoid flicker, just use refreshing spinner
+			const statsRes = await api.get("/dashboard/stats");
+			const statsData = await statsRes.json();
+			if (statsRes.ok) setStats(statsData);
+
+			const recentRes = await api.get("/dashboard/recent");
+			const recentData = await recentRes.json();
+			if (recentRes.ok) setRecent(recentData);
+		} catch (error) {
+			console.error("Failed to fetch dashboard data:", error);
+		} finally {
+			if (isRefresh) setRefreshing(false);
+		}
+	};
 
 	useFocusEffect(
 		useCallback(() => {
-			const fetchData = async () => {
-				try {
-					const statsRes = await api.get("/dashboard/stats");
-					const statsData = await statsRes.json();
-					if (statsRes.ok) setStats(statsData);
-
-					const recentRes = await api.get("/dashboard/recent");
-					const recentData = await recentRes.json();
-					if (recentRes.ok) setRecent(recentData);
-				} catch (error) {
-					console.error("Failed to fetch dashboard data:", error);
-				}
-			};
-
 			fetchData();
 		}, [])
 	);
 
+	const onRefresh = () => {
+		setRefreshing(true);
+		fetchData(true);
+	};
+
 	const statsDisplay = [
-		{ key: "workers", label: "Workers", value: stats.workers },
-		{ key: "jobs", label: "Active workers", value: stats.jobs },
+		{
+			key: "workers",
+			label: "Workers",
+			value: stats.workers,
+			onPress: () => router.push("/(screens)/labours")
+		},
+		{
+			key: "jobs",
+			label: "Active workers",
+			value: stats.jobs,
+			onPress: () => router.push({ pathname: "/(screens)/labours", params: { status: 'active' } } as any)
+		},
 		{
 			key: "attendance",
 			label: "Today Present",
 			value: stats.attendance,
 			onPress: () => router.push("/(screens)/reports/site-attendance" as any),
 		},
-		{ key: "approvals", label: "Total site", value: stats.approvals },
+		{
+			key: "approvals",
+			label: "Total Sites",
+			value: stats.approvals,
+			onPress: () => router.push("/(screens)/sites" as any)
+		},
 	];
 
 	// Optional: if newActivity param is passed, we might want to manually add it 
@@ -79,7 +104,12 @@ export default function HomeScreen() {
 	);
 
 	return (
-		<ScrollView contentContainerStyle={local.container}>
+		<ScrollView
+			contentContainerStyle={local.container}
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+			}
+		>
 			<View style={local.header}>
 				<Text style={globalStyles.head1}>labour manage</Text>
 				<Text style={local.date}>{today}</Text>
@@ -126,9 +156,9 @@ export default function HomeScreen() {
 
 					<TouchableOpacity
 						style={[local.actionButton, { marginRight: 0 }]}
-						onPress={() => router.push("/(screens)/reports/labour_summary" as any)}
+						onPress={() => router.push("/(screens)/reports/wage-report" as any)}
 					>
-						<Text style={local.actionText}>Reports</Text>
+						<Text style={local.actionText}>Wage Report</Text>
 					</TouchableOpacity>
 				</View>
 			</View>

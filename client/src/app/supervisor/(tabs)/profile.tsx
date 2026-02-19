@@ -1,19 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "../../../constants";
 import { styles } from "../../style/stylesheet1";
 
 export default function SupervisorProfile() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         loadUser();
     }, []);
 
-    const loadUser = async () => {
+    const loadUser = async (isRefresh = false) => {
         try {
             const userData = await AsyncStorage.getItem("userData");
             if (userData) {
@@ -21,7 +23,14 @@ export default function SupervisorProfile() {
             }
         } catch (error) {
             console.error("Error loading user data:", error);
+        } finally {
+            if (isRefresh) setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        loadUser(true);
     };
 
     const handleLogout = async () => {
@@ -31,8 +40,23 @@ export default function SupervisorProfile() {
                 text: "Logout",
                 style: "destructive",
                 onPress: async () => {
-                    await AsyncStorage.clear();
-                    router.replace("/auth/authentication2");
+                    try {
+                        const refreshToken = await AsyncStorage.getItem("refreshToken");
+                        if (refreshToken) {
+                            await fetch(`${API_URL}/auth/logout`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ refreshToken }),
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Logout error:", error);
+                    } finally {
+                        await AsyncStorage.clear();
+                        router.replace("/auth/authentication2" as any);
+                    }
                 },
             },
         ]);
@@ -40,7 +64,12 @@ export default function SupervisorProfile() {
 
     return (
         <SafeAreaView style={styles.mainContainer}>
-            <View style={styles.content}>
+            <ScrollView
+                contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+                }
+            >
                 <Text style={styles.header}>Profile</Text>
 
                 {user && (
@@ -57,7 +86,7 @@ export default function SupervisorProfile() {
                 >
                     <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: '600' }}>Logout</Text>
                 </TouchableOpacity>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }

@@ -2,7 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { API_URL } from "../../constants";
 import { api } from "../../services/api";
 
@@ -36,6 +36,8 @@ export default function OvertimeScreen() {
 	const [date, setDate] = useState(new Date());
 	const [isAdmin, setIsAdmin] = useState(false);
 
+	const [refreshing, setRefreshing] = useState(false);
+
 	const isGlobalView = !siteId;
 
 	useEffect(() => {
@@ -59,9 +61,9 @@ export default function OvertimeScreen() {
 		}
 	};
 
-	const fetchLabours = async () => {
+	const fetchLabours = async (isRefresh = false) => {
 		try {
-			setLoading(true);
+			if (!isRefresh) setLoading(true);
 			let url = `${API_URL}/labours?status=active`;
 			if (siteId) {
 				// If backend supports filtering by site
@@ -80,7 +82,16 @@ export default function OvertimeScreen() {
 			console.error("Fetch labours error:", error);
 			Alert.alert("Error", "Unable to connect to server");
 		} finally {
-			setLoading(false);
+			if (!isRefresh) setLoading(false);
+		}
+	};
+
+	const onRefresh = async () => {
+		setRefreshing(true);
+		try {
+			await Promise.all([fetchLabours(true), fetchExistingOvertime()]);
+		} finally {
+			setRefreshing(false);
 		}
 	};
 
@@ -271,6 +282,9 @@ export default function OvertimeScreen() {
 				contentContainerStyle={styles.listContent}
 				ListEmptyComponent={
 					!loading ? <Text style={styles.emptyText}>No labours found.</Text> : null
+				}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
 				}
 			/>
 

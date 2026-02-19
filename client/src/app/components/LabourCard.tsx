@@ -1,6 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Labour {
     id: number;
@@ -11,6 +11,9 @@ interface Labour {
     site: string;
     site_id?: number;
     status?: 'active' | 'terminated' | 'blacklisted';
+    profile_image?: string;
+    date_of_birth?: string;
+    emergency_phone?: string;
 }
 
 interface LabourCardProps {
@@ -22,9 +25,10 @@ interface LabourCardProps {
     onAdvance?: (labour: Labour) => void;
     showMoveAction?: boolean;
     hideRate?: boolean;
+    onPress?: (labour: Labour) => void;
 }
 
-export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke, onAdvance, showMoveAction = false, hideRate = false }: LabourCardProps) => {
+export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke, onAdvance, onPress, showMoveAction = false, hideRate = false }: LabourCardProps) => {
     const getStatusColor = (status?: string) => {
         switch (status) {
             case 'terminated': return '#e53935';
@@ -33,28 +37,52 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke,
         }
     };
 
+    const calculateAge = (dobString?: string) => {
+        if (!dobString) return null;
+        const dob = new Date(dobString);
+        const diffMs = Date.now() - dob.getTime();
+        const ageDate = new Date(diffMs);
+        return Math.abs(ageDate.getUTCFullYear() - 1970);
+    };
+
+    const age = calculateAge(labour.date_of_birth);
     const isActionable = labour.status !== 'terminated' && labour.status !== 'blacklisted';
     const isTerminated = labour.status === 'terminated';
     const isBlacklisted = labour.status === 'blacklisted';
 
-    return (
+    const CardContent = (
         <View style={[
             styles.card,
             labour.status === 'terminated' && styles.terminatedCard,
             labour.status === 'blacklisted' && styles.blacklistedCard
         ]}>
             <View style={styles.headerRow}>
-                <View>
-                    <View style={styles.nameRow}>
-                        <Text style={styles.name}>{labour.name}</Text>
-                        {labour.status && labour.status !== 'active' && (
-                            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(labour.status) }]}>
-                                <Text style={styles.statusText}>{labour.status.toUpperCase()}</Text>
-                            </View>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    {/* Profile Image (Small) */}
+                    <View style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }}>
+                        {labour.profile_image ? (
+                            <Image
+                                source={{ uri: labour.profile_image }}
+                                style={{ width: 40, height: 40 }}
+                            />
+                        ) : (
+                            <MaterialIcons name="person" size={24} color="#ccc" />
                         )}
                     </View>
-                    <Text style={styles.phone}>{labour.phone}</Text>
+
+                    <View>
+                        <View style={styles.nameRow}>
+                            <Text style={styles.name}>{labour.name}</Text>
+                            {labour.status && labour.status !== 'active' && (
+                                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(labour.status) }]}>
+                                    <Text style={styles.statusText}>{labour.status.toUpperCase()}</Text>
+                                </View>
+                            )}
+                        </View>
+                        <Text style={styles.phone}>{labour.phone}</Text>
+                    </View>
                 </View>
+
                 {!hideRate && (
                     <View style={styles.rateContainer}>
                         <Text style={styles.rateLabel}>Rate/hr</Text>
@@ -64,6 +92,24 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke,
                     </View>
                 )}
             </View>
+
+            {/* Extra Details Row (Age, Emergency) */}
+            {(age || labour.emergency_phone) && (
+                <View style={[styles.detailsRow, { marginBottom: 8 }]}>
+                    {age && (
+                        <View style={styles.detailItem}>
+                            <MaterialIcons name="cake" size={16} color="#666" />
+                            <Text style={styles.detailText}>{age} yrs</Text>
+                        </View>
+                    )}
+                    {labour.emergency_phone && (
+                        <View style={styles.detailItem}>
+                            <MaterialIcons name="phone-in-talk" size={16} color="#666" />
+                            <Text style={styles.detailText}>{labour.emergency_phone}</Text>
+                        </View>
+                    )}
+                </View>
+            )}
 
             <View style={styles.detailsRow}>
                 <View style={styles.detailItem}>
@@ -139,6 +185,17 @@ export const LabourCard = ({ labour, onMove, onTerminate, onBlacklist, onRevoke,
             )}
         </View>
     );
+
+
+    if (onPress) {
+        return (
+            <TouchableOpacity onPress={() => onPress(labour)} activeOpacity={0.7}>
+                {CardContent}
+            </TouchableOpacity>
+        );
+    }
+
+    return CardContent;
 };
 
 const styles = StyleSheet.create({

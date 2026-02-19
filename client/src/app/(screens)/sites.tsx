@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     Alert,
     FlatList,
+    RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -28,9 +29,15 @@ export default function SitesScreen() {
     const [sites, setSites] = useState<Site[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchSites = async () => {
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchSites = async (isRefresh = false) => {
         try {
-            setLoading(true);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const response = await api.get("/sites");
             const data = await response.json();
 
@@ -44,7 +51,12 @@ export default function SitesScreen() {
             Alert.alert("Error", "Unable to connect to server");
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        fetchSites(true);
     };
 
     useFocusEffect(
@@ -94,7 +106,7 @@ export default function SitesScreen() {
                 </TouchableOpacity>
             </View>
 
-            {loading ? (
+            {loading && !refreshing ? (
                 <ActivityIndicator size="large" color="#0a84ff" style={styles.loader} />
             ) : sites.length === 0 ? (
                 <View style={styles.emptyState}>
@@ -113,6 +125,9 @@ export default function SitesScreen() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={renderSite}
                     contentContainerStyle={styles.list}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
+                    }
                 />
             )}
         </View>

@@ -16,13 +16,22 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Routes
-app.use('/api/sites', sitesRoutes);
-app.use('/api/auth', authRoutes);
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
 
-app.use('/api/labours', labourRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/attendance', attendanceRoutes);
+const { authenticateToken } = require('./middleware/auth');
+
+// Routes
+app.use('/api/sites', authenticateToken, sitesRoutes);
+app.use('/api/auth', authRoutes); // Auth routes (signin/signup) remain public
+
+app.use('/api/labours', authenticateToken, labourRoutes);
+app.use('/api/dashboard', authenticateToken, dashboardRoutes);
+app.use('/api/attendance', authenticateToken, attendanceRoutes);
+app.use('/api/overtime', authenticateToken, require('./routes/overtime'));
+app.use('/api/reports', authenticateToken, require('./routes/reports'));
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Labour Management Server');
