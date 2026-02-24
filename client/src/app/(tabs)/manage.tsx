@@ -1,7 +1,8 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import React, { JSX } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { styles } from "../style/stylesheet1";
 
 const options = [
@@ -15,6 +16,8 @@ const options = [
 
 export default function Manage(): JSX.Element {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const localStyles = getStyles(isDark);
 
   const onPress = (key: string) => {
     if (key === "labours") {
@@ -46,25 +49,26 @@ export default function Manage(): JSX.Element {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { backgroundColor: isDark ? "#121212" : "#f1f5f9" }]}>
+      <View style={localStyles.headerContainer}>
+        <Text style={localStyles.headerText}>Manage</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Manage</Text>
-
         <View style={styles.grid}>
           {options.map((opt) => (
             <Pressable
               key={opt.key}
-              style={styles.optionCard}
+              style={[styles.optionCard, { backgroundColor: isDark ? "#1e1e1e" : "#fff", shadowOpacity: isDark ? 0.3 : 0.05 }]}
               onPress={() => onPress(opt.key)}
               accessibilityRole="button"
               accessibilityLabel={opt.title}
             >
-              <View style={styles.optionIconWrap}>
-                <MaterialIcons name={opt.icon as any} size={20} color="#0a84ff" />
+              <View style={[styles.optionIconWrap, { backgroundColor: isDark ? "#2a2a2a" : "#f1f5f9" }]}>
+                <MaterialIcons name={opt.icon as any} size={20} color={isDark ? "#4da6ff" : "#0a84ff"} />
               </View>
 
-              <Text style={styles.optionTitle}>{opt.title}</Text>
-              <Text style={styles.optionDesc}>{opt.desc}</Text>
+              <Text style={[styles.optionTitle, { color: isDark ? "#fff" : "#1e293b" }]}>{opt.title}</Text>
+              <Text style={[styles.optionDesc, { color: isDark ? "#aaa" : "#64748b" }]}>{opt.desc}</Text>
             </Pressable>
           ))}
         </View>
@@ -72,3 +76,25 @@ export default function Manage(): JSX.Element {
     </View>
   );
 }
+
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  headerContainer: {
+    backgroundColor: isDark ? "#1e1e1e" : "#FFFFFF",
+    paddingHorizontal: 24,
+    paddingTop: 54,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.3 : 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: isDark ? "#ffffff" : "#0F172A",
+  },
+});

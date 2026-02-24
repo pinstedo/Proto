@@ -9,11 +9,15 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 import { styles as globalStyles } from "../style/stylesheet";
 
 export default function AddSite() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
+
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [description, setDescription] = useState("");
@@ -45,7 +49,7 @@ export default function AddSite() {
     return (
         <ScrollView contentContainerStyle={local.container}>
             <View style={local.header}>
-                <Text style={globalStyles.head1}>Add Site</Text>
+                <Text style={[globalStyles.head1, { color: isDark ? "#fff" : "#000" }]}>Add Site</Text>
                 <Text style={local.sub}>Enter site details below</Text>
             </View>
 
@@ -56,6 +60,7 @@ export default function AddSite() {
                     value={name}
                     onChangeText={setName}
                     placeholder="e.g., Construction Site A"
+                    placeholderTextColor={isDark ? "#888" : "#999"}
                 />
 
                 <Text style={local.label}>Address</Text>
@@ -64,6 +69,7 @@ export default function AddSite() {
                     value={address}
                     onChangeText={setAddress}
                     placeholder="Site address or location"
+                    placeholderTextColor={isDark ? "#888" : "#999"}
                 />
 
                 <Text style={local.label}>Description</Text>
@@ -72,6 +78,7 @@ export default function AddSite() {
                     value={description}
                     onChangeText={setDescription}
                     placeholder="Optional description or notes"
+                    placeholderTextColor={isDark ? "#888" : "#999"}
                     multiline
                 />
 
@@ -87,19 +94,19 @@ export default function AddSite() {
     );
 }
 
-const local = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         padding: 20,
         paddingTop: 40,
         minHeight: "100%",
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#121212" : "#fff",
     },
     header: {
         alignItems: "center",
         marginBottom: 20,
     },
     sub: {
-        color: "#666",
+        color: isDark ? "#aaa" : "#666",
         marginTop: 6,
         fontSize: 16,
     },
@@ -109,26 +116,27 @@ const local = StyleSheet.create({
     label: {
         marginTop: 12,
         marginBottom: 6,
-        color: "#333",
+        color: isDark ? "#ccc" : "#333",
         fontWeight: "500",
     },
     input: {
         borderWidth: 1,
-        borderColor: "#e6e6e6",
+        borderColor: isDark ? "#444" : "#e6e6e6",
         padding: 12,
         borderRadius: 8,
-        backgroundColor: "#fafafa",
+        backgroundColor: isDark ? "#2a2a2a" : "#fafafa",
         fontSize: 16,
+        color: isDark ? "#fff" : "#000",
     },
     cancelBtn: {
         marginTop: 18,
-        backgroundColor: "#ddd",
+        backgroundColor: isDark ? "#333" : "#ddd",
         padding: 14,
         borderRadius: 8,
         alignItems: "center",
     },
     cancelText: {
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
         fontWeight: "700",
     },
     submitBtn: {

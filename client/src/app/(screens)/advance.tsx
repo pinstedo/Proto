@@ -18,6 +18,7 @@ import {
     View
 } from "react-native";
 import { API_URL } from "../../constants";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 import { LabourCard } from "../components/LabourCard";
 
@@ -34,6 +35,8 @@ interface Labour {
 
 export default function Advance() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
     const { supervisorId } = useLocalSearchParams();
     const [labours, setLabours] = useState<Labour[]>([]);
     const [loading, setLoading] = useState(true);
@@ -184,7 +187,7 @@ export default function Advance() {
                                     Add Advance for {selectedLabour?.name}
                                 </Text>
                                 <TouchableOpacity onPress={() => setShowAdvanceModal(false)}>
-                                    <MaterialIcons name="close" size={24} color="#333" />
+                                    <MaterialIcons name="close" size={24} color={isDark ? "#fff" : "#333"} />
                                 </TouchableOpacity>
                             </View>
 
@@ -197,6 +200,7 @@ export default function Advance() {
                                         placeholder="Enter amount"
                                         value={amount}
                                         onChangeText={setAmount}
+                                        placeholderTextColor={isDark ? "#888" : "#999"}
                                     />
                                 </View>
 
@@ -209,6 +213,7 @@ export default function Advance() {
                                         onChangeText={setNotes}
                                         multiline
                                         numberOfLines={3}
+                                        placeholderTextColor={isDark ? "#888" : "#999"}
                                     />
                                 </View>
 
@@ -230,11 +235,11 @@ export default function Advance() {
     );
 }
 
-const local = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
         paddingTop: 40,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: isDark ? "#121212" : "#f5f5f5",
     },
     headerRow: {
         width: "100%",
@@ -243,13 +248,13 @@ const local = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 20,
         paddingBottom: 16,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: isDark ? "#333" : "#eee",
     },
     backBtn: { paddingVertical: 6, paddingHorizontal: 8 },
-    backText: { color: "#0a84ff", fontWeight: "600", fontSize: 16 },
-    header: { fontSize: 20, fontWeight: "700", color: "#333" },
+    backText: { color: isDark ? "#4da6ff" : "#0a84ff", fontWeight: "600", fontSize: 16 },
+    header: { fontSize: 20, fontWeight: "700", color: isDark ? "#fff" : "#333" },
     listContent: {
         padding: 16,
         paddingBottom: 100,
@@ -257,7 +262,7 @@ const local = StyleSheet.create({
     emptyText: {
         textAlign: "center",
         marginTop: 40,
-        color: "#999",
+        color: isDark ? "#aaa" : "#999",
         fontSize: 16,
     },
     modalOverlay: {
@@ -270,7 +275,7 @@ const local = StyleSheet.create({
         width: '100%',
     },
     modalContent: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderRadius: 12,
         padding: 20,
         elevation: 5,
@@ -284,25 +289,25 @@ const local = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     inputGroup: {
         marginBottom: 16,
     },
     label: {
         fontSize: 14,
-        color: "#333",
+        color: isDark ? "#ccc" : "#333",
         fontWeight: "500",
         marginBottom: 8,
     },
     input: {
-        backgroundColor: "#f9f9f9",
+        backgroundColor: isDark ? "#2a2a2a" : "#f9f9f9",
         borderWidth: 1,
-        borderColor: "#ddd",
+        borderColor: isDark ? "#444" : "#ddd",
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     textArea: {
         height: 80,
@@ -316,7 +321,7 @@ const local = StyleSheet.create({
         marginTop: 8,
     },
     disabledBtn: {
-        backgroundColor: "#ccc",
+        backgroundColor: isDark ? "#555" : "#ccc",
     },
     submitBtnText: {
         color: "#fff",

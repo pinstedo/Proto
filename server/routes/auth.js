@@ -82,34 +82,72 @@ router.post('/signin', async (req, res) => {
         const db = await openDb();
         const user = await db.get(`SELECT * FROM users WHERE phone = ?`, [phone]);
 
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid credentials' });
+        if (user) {
+            if (user.is_deleted) {
+                return res.status(403).json({ error: 'Account disabled or deleted. Please contact admin.' });
+            }
+
+            const isMatch = await bcrypt.compare(password, user.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Invalid credentials' });
+            }
+
+            // Single Session Enforcement for Supervisors
+            if (user.role === 'supervisor') {
+                // Revoke any existing active sessions to allow login on the new device 
+                // while enforcing single-device usage.
+                await db.run(
+                    `UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ? AND revoked = 0`,
+                    [user.id]
+                );
+            }
+
+            const tokens = await generateTokens(user, db);
+            console.log('Signin generated tokens:', tokens);
+            return res.json({
+                message: 'Login successful',
+                ...tokens,
+                user: { id: user.id, name: user.name, phone: user.phone, role: user.role, profile_image: user.profile_image }
+            });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid credentials' });
-        }
+        // If not in `users`, check `labours`
+        const labour = await db.get(`SELECT * FROM labours WHERE phone = ? AND status = 'active'`, [phone]);
 
-        // Single Session Enforcement for Supervisors
-        if (user.role === 'supervisor') {
-            const existingToken = await db.get(
-                `SELECT * FROM refresh_tokens WHERE user_id = ? AND revoked = 0 AND expires_at > ?`,
-                [user.id, new Date().toISOString()]
+        if (labour) {
+            if (!labour.password_hash) {
+                return res.status(400).json({ error: 'Account requires password setup. Contact admin.' });
+            }
+
+            const isMatch = await bcrypt.compare(password, labour.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Invalid credentials' });
+            }
+
+            const accessToken = jwt.sign(
+                { id: labour.id, phone: labour.phone, role: 'labour' },
+                SECRET_KEY,
+                { expiresIn: '15m' }
             );
 
-            if (existingToken) {
-                return res.status(403).json({ error: 'Supervisor already logged in on another device.' });
-            }
+            const refreshToken = crypto.randomBytes(40).toString('hex');
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+            await db.run(
+                `INSERT INTO labour_refresh_tokens (labour_id, token, expires_at) VALUES (?, ?, ?)`,
+                [labour.id, refreshToken, expiresAt]
+            );
+
+            return res.json({
+                message: 'Login successful',
+                accessToken,
+                refreshToken,
+                user: { id: labour.id, name: labour.name, phone: labour.phone, role: 'labour', profile_image: labour.profile_image }
+            });
         }
 
-        const tokens = await generateTokens(user, db);
-        console.log('Signin generated tokens:', tokens);
-        res.json({
-            message: 'Login successful',
-            ...tokens,
-            user: { id: user.id, name: user.name, phone: user.phone, role: user.role }
-        });
+        return res.status(400).json({ error: 'Invalid credentials' });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -162,8 +200,8 @@ router.post('/refresh-token', async (req, res) => {
             }
 
             const user = await db.get(`SELECT * FROM users WHERE id = ?`, [storedToken.user_id]);
-            if (!user) {
-                return res.status(403).json({ error: 'User not found' });
+            if (!user || user.is_deleted) {
+                return res.status(403).json({ error: 'User not found or account disabled' });
             }
 
             // Revoke old token (Rotation)
@@ -282,7 +320,11 @@ router.post('/labour-signin', async (req, res) => {
 router.get('/supervisors', authenticateToken, async (req, res) => {
     try {
         const db = await openDb();
-        const supervisors = await db.all(`SELECT id, name, phone FROM users WHERE role = 'supervisor'`);
+
+        // Automatic cleanup: permanently delete supervisors in bin for > 7 days
+        await db.run(`DELETE FROM users WHERE role = 'supervisor' AND is_deleted = 1 AND deleted_at < datetime('now', '-7 days')`);
+
+        const supervisors = await db.all(`SELECT id, name, phone FROM users WHERE role = 'supervisor' AND is_deleted = 0`);
         res.json(supervisors);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -351,6 +393,259 @@ router.put('/supervisors/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Phone number already registered' });
         }
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Soft Delete a Supervisor (Admin Only)
+router.delete('/supervisors/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can delete supervisors' });
+    }
+
+    try {
+        const db = await openDb();
+        const existing = await db.get('SELECT * FROM users WHERE id = ? AND role = "supervisor"', [id]);
+        if (!existing) {
+            return res.status(404).json({ error: 'Supervisor not found' });
+        }
+
+        await db.run('BEGIN TRANSACTION');
+        try {
+            // Soft delete user
+            await db.run(`UPDATE users SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?`, [id]);
+            // Revoke sessions
+            await db.run(`UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?`, [id]);
+            // Remove site assignments
+            await db.run(`DELETE FROM site_supervisors WHERE supervisor_id = ?`, [id]);
+
+            await db.run('COMMIT');
+            res.json({ message: 'Supervisor moved to bin successfully' });
+        } catch (txnErr) {
+            await db.run('ROLLBACK');
+            throw txnErr;
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin changes Supervisor Password
+router.put('/supervisors/:id/change-password', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can change supervisor passwords' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    try {
+        const db = await openDb();
+        const existing = await db.get('SELECT * FROM users WHERE id = ? AND role = "supervisor"', [id]);
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Supervisor not found' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.run(
+            `UPDATE users SET password_hash = ? WHERE id = ?`,
+            [hashedPassword, id]
+        );
+
+        res.json({ message: 'Supervisor password changed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get Deleted Supervisors (Bin)
+router.get('/supervisors/bin', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can view the bin' });
+    }
+    try {
+        const db = await openDb();
+        const supervisors = await db.all(`SELECT id, name, phone, deleted_at FROM users WHERE role = 'supervisor' AND is_deleted = 1`);
+        res.json(supervisors);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Restore a Supervisor
+router.put('/supervisors/:id/restore', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can restore supervisors' });
+    }
+
+    try {
+        const db = await openDb();
+        const existing = await db.get('SELECT * FROM users WHERE id = ? AND role = "supervisor" AND is_deleted = 1', [id]);
+        if (!existing) {
+            return res.status(404).json({ error: 'Deleted supervisor not found' });
+        }
+
+        await db.run(`UPDATE users SET is_deleted = 0, deleted_at = NULL WHERE id = ?`, [id]);
+        res.json({ message: 'Supervisor restored successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Permanently Delete a Supervisor
+router.delete('/supervisors/:id/permanent', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can permanently delete supervisors' });
+    }
+
+    try {
+        const db = await openDb();
+        const existing = await db.get('SELECT * FROM users WHERE id = ? AND role = "supervisor" AND is_deleted = 1', [id]);
+        if (!existing) {
+            return res.status(404).json({ error: 'Deleted supervisor not found' });
+        }
+
+        await db.run(`DELETE FROM users WHERE id = ?`, [id]);
+        res.json({ message: 'Supervisor permanently deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// Change Password (Authenticated Users)
+router.put('/change-password', authenticateToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    try {
+        const db = await openDb();
+
+        let table = 'users';
+        if (userRole === 'labour') {
+            table = 'labours';
+        }
+
+        const user = await db.get(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (!user.password_hash) {
+            return res.status(400).json({ error: 'Password not set for this account' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        await db.run(
+            `UPDATE ${table} SET password_hash = ? WHERE id = ?`,
+            [hashedNewPassword, userId]
+        );
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update Profile (Authenticated Users)
+router.put('/profile', authenticateToken, async (req, res) => {
+    const { name, profile_image } = req.body;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    // Optional: we can require at least one field to update
+    if (name === undefined && profile_image === undefined) {
+        return res.status(400).json({ error: 'No fields provided to update.' });
+    }
+
+    try {
+        const db = await openDb();
+        let table = 'users';
+        if (userRole === 'labour') {
+            table = 'labours';
+        }
+
+        const user = await db.get(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const newName = name !== undefined ? name : user.name;
+        // Allows clearing the image by sending null or empty string
+        const newProfileImage = profile_image !== undefined ? profile_image : user.profile_image;
+
+        await db.run(
+            `UPDATE ${table} SET name = ?, profile_image = ? WHERE id = ?`,
+            [newName, newProfileImage, userId]
+        );
+
+        // Fetch updated user to return
+        const updatedUserRaw = await db.get(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
+
+        // Structure the response object safely
+        const updatedUser = {
+            id: updatedUserRaw.id,
+            name: updatedUserRaw.name,
+            phone: updatedUserRaw.phone,
+            role: userRole,
+            profile_image: updatedUserRaw.profile_image
+        };
+
+        res.json({ message: 'Profile updated successfully', user: updatedUser });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Clear Database (Admin Only)
+router.delete('/clear-database', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can clear the database' });
+    }
+
+    try {
+        const db = await openDb();
+
+        await db.run('BEGIN TRANSACTION');
+
+        try {
+            await db.run('DELETE FROM attendance');
+            await db.run('DELETE FROM daily_site_attendance_status');
+            await db.run('DELETE FROM advances');
+            await db.run('DELETE FROM overtime');
+            await db.run('DELETE FROM site_supervisors');
+            await db.run('DELETE FROM sites');
+            await db.run('DELETE FROM labour_refresh_tokens');
+            await db.run('DELETE FROM labours');
+
+            await db.run(`DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')`);
+            await db.run(`DELETE FROM users WHERE role != 'admin'`);
+
+            await db.run('COMMIT');
+            res.json({ message: 'Database cleared successfully' });
+        } catch (txnErr) {
+            await db.run('ROLLBACK');
+            throw txnErr;
+        }
+    } catch (err) {
+        console.error("Clear database error:", err);
+        res.status(500).json({ error: 'Failed to clear database' });
     }
 });
 

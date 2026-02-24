@@ -3,7 +3,7 @@ const { open } = require('sqlite');
 
 async function openDb() {
   return open({
-    filename: './proto.db',
+    filename: './protoMain.db',
     driver: sqlite3.Database
   });
 }
@@ -18,6 +18,8 @@ async function initDb() {
       phone TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       role TEXT DEFAULT 'admin',
+      is_deleted BOOLEAN DEFAULT 0,
+      deleted_at DATETIME DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -30,18 +32,41 @@ async function initDb() {
   } catch (e) {
     // Column probably already exists, ignore error
   }
+  // Add profile_image column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE users ADD COLUMN profile_image TEXT`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+  // Add is_deleted column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE users ADD COLUMN is_deleted BOOLEAN DEFAULT 0`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+  // Add deleted_at column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE users ADD COLUMN deleted_at DATETIME DEFAULT NULL`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
   await db.exec(`
     CREATE TABLE IF NOT EXISTS labours (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       phone TEXT,
+      password_hash TEXT,
       aadhaar TEXT,
       site TEXT,
       site_id INTEGER REFERENCES sites(id),
       rate REAL,
       notes TEXT,
       trade TEXT,
+      date_of_birth TEXT,
+      emergency_phone TEXT,
       status TEXT DEFAULT 'active',
+      profile_image TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -56,6 +81,41 @@ async function initDb() {
   // Add status column if it doesn't exist
   try {
     await db.exec(`ALTER TABLE labours ADD COLUMN status TEXT DEFAULT 'active'`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
+  // Add password_hash column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE labours ADD COLUMN password_hash TEXT`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
+  // Add profile_image column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE labours ADD COLUMN profile_image TEXT`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
+  // Add date_of_birth column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE labours ADD COLUMN date_of_birth TEXT`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
+  // Add emergency_phone column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE labours ADD COLUMN emergency_phone TEXT`);
+  } catch (e) {
+    // Column probably already exists, ignore error
+  }
+
+  // Add trade column if it doesn't exist
+  try {
+    await db.exec(`ALTER TABLE labours ADD COLUMN trade TEXT`);
   } catch (e) {
     // Column probably already exists, ignore error
   }
@@ -159,6 +219,15 @@ async function initDb() {
       expires_at DATETIME NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       revoked BOOLEAN DEFAULT 0
+    );
+
+    -- Complaints table
+    CREATE TABLE IF NOT EXISTS complaints (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      labour_id INTEGER REFERENCES labours(id) ON DELETE CASCADE,
+      complaint TEXT NOT NULL,
+      status TEXT DEFAULT 'unread',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 

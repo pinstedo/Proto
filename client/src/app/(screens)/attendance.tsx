@@ -6,6 +6,7 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } f
 import { Calendar } from "../../components/Calendar";
 import { CustomModal, ModalType } from "../../components/CustomModal";
 import { API_URL } from "../../constants";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 interface Labour {
@@ -17,6 +18,8 @@ interface Labour {
 
 export default function AttendanceScreen() {
 	const router = useRouter();
+	const { isDark } = useTheme();
+	const local = getStyles(isDark);
 	const { siteId, siteName } = useLocalSearchParams();
 	const [labours, setLabours] = useState<Labour[]>([]);
 	const [attendance, setAttendance] = useState<Map<number, 'full' | 'half' | 'absent'>>(new Map());
@@ -248,38 +251,38 @@ export default function AttendanceScreen() {
 		const itemLocked = locked || isGlobalView;
 
 		return (
-			<View style={styles.card}>
-				<View style={styles.labourInfo}>
-					<Text style={styles.labourName}>{item.name}</Text>
-					<Text style={styles.labourRole}>{item.role}</Text>
+			<View style={local.card}>
+				<View style={local.labourInfo}>
+					<Text style={local.labourName}>{item.name}</Text>
+					<Text style={local.labourRole}>{item.role}</Text>
 					{isGlobalView && item.site && (
-						<Text style={styles.siteInfo}>Site: {item.site}</Text>
+						<Text style={local.siteInfo}>Site: {item.site}</Text>
 					)}
 				</View>
 
-				<View style={styles.statusContainer}>
+				<View style={local.statusContainer}>
 					<Pressable
-						style={[styles.statusBtn, status === 'full' && styles.statusBtnActive, { backgroundColor: status === 'full' ? '#4CAF50' : '#f0f0f0', opacity: itemLocked ? 0.6 : 1 }]}
+						style={[local.statusBtn, status === 'full' && local.statusBtnActive, { backgroundColor: status === 'full' ? (isDark ? '#2e7d32' : '#4CAF50') : (isDark ? '#2a2a2a' : '#f0f0f0'), opacity: itemLocked ? 0.6 : 1 }]}
 						onPress={() => !itemLocked && handleStatusChange(item.id, 'full')}
 						disabled={itemLocked}
 					>
-						<Text style={[styles.statusText, status === 'full' && styles.statusTextActive]}>Full</Text>
+						<Text style={[local.statusText, status === 'full' && local.statusTextActive]}>Full</Text>
 					</Pressable>
 
 					<Pressable
-						style={[styles.statusBtn, status === 'half' && styles.statusBtnActive, { backgroundColor: status === 'half' ? '#FFC107' : '#f0f0f0', opacity: itemLocked ? 0.6 : 1 }]}
+						style={[local.statusBtn, status === 'half' && local.statusBtnActive, { backgroundColor: status === 'half' ? (isDark ? '#f57f17' : '#FFC107') : (isDark ? '#2a2a2a' : '#f0f0f0'), opacity: itemLocked ? 0.6 : 1 }]}
 						onPress={() => !itemLocked && handleStatusChange(item.id, 'half')}
 						disabled={itemLocked}
 					>
-						<Text style={[styles.statusText, status === 'half' && styles.statusTextActive]}>Half</Text>
+						<Text style={[local.statusText, status === 'half' && local.statusTextActive]}>Half</Text>
 					</Pressable>
 
 					<Pressable
-						style={[styles.statusBtn, status === 'absent' && styles.statusBtnActive, { backgroundColor: status === 'absent' ? '#F44336' : '#f0f0f0', opacity: itemLocked ? 0.6 : 1 }]}
+						style={[local.statusBtn, status === 'absent' && local.statusBtnActive, { backgroundColor: status === 'absent' ? (isDark ? '#c62828' : '#F44336') : (isDark ? '#2a2a2a' : '#f0f0f0'), opacity: itemLocked ? 0.6 : 1 }]}
 						onPress={() => !itemLocked && handleStatusChange(item.id, 'absent')}
 						disabled={itemLocked}
 					>
-						<Text style={[styles.statusText, status === 'absent' && styles.statusTextActive]}>Absent</Text>
+						<Text style={[local.statusText, status === 'absent' && local.statusTextActive]}>Absent</Text>
 					</Pressable>
 				</View>
 			</View>
@@ -293,41 +296,41 @@ export default function AttendanceScreen() {
 
 	// Header component for FlatList to avoid nesting ScrollViews
 	const ListHeader = () => (
-		<View style={styles.subHeader}>
+		<View style={local.subHeader}>
 			{isGlobalView ? (
-				<View style={styles.filterContainer}>
-					<Text style={styles.filterLabel}>Filter:</Text>
+				<View style={local.filterContainer}>
+					<Text style={local.filterLabel}>Filter:</Text>
 					<Pressable onPress={() => setFilter(f => {
 						if (f === 'all') return 'full';
 						if (f === 'full') return 'half';
 						if (f === 'half') return 'absent';
 						return 'all';
-					})} style={styles.filterBtn}>
-						<Text style={styles.filterText}>{filter.toUpperCase()}</Text>
+					})} style={local.filterBtn}>
+						<Text style={local.filterText}>{filter.toUpperCase()}</Text>
 					</Pressable>
 				</View>
 			) : (
 				<View>
 					<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-						<Text style={styles.siteName}>{decodeURIComponent(siteName as string)}</Text>
+						<Text style={local.siteName}>{decodeURIComponent(siteName as string)}</Text>
 
 						<Pressable
-							style={styles.dateSelector}
+							style={local.dateSelector}
 							onPress={() => setShowCalendar(true)}
 						>
-							<MaterialIcons name="calendar-today" size={20} color="#0a84ff" />
-							<Text style={styles.dateSelectorText}>{date.toLocaleDateString()}</Text>
+							<MaterialIcons name="calendar-today" size={20} color={isDark ? "#64b5f6" : "#0a84ff"} />
+							<Text style={local.dateSelectorText}>{date.toLocaleDateString()}</Text>
 						</Pressable>
 					</View>
 
-					<View style={styles.foodToggleContainer}>
-						<Text style={styles.foodToggleText}>Food Provided by Supervisor</Text>
+					<View style={local.foodToggleContainer}>
+						<Text style={local.foodToggleText}>Food Provided by Supervisor</Text>
 						<Switch
 							value={foodProvided}
 							onValueChange={(val) => { if (!locked) setFoodProvided(val); }}
 							disabled={locked}
-							trackColor={{ false: "#767577", true: "#81b0ff" }}
-							thumbColor={foodProvided ? "#0a84ff" : "#f4f3f4"}
+							trackColor={{ false: isDark ? "#444" : "#767577", true: isDark ? "#64b5f6" : "#81b0ff" }}
+							thumbColor={foodProvided ? (isDark ? "#4da6ff" : "#0a84ff") : (isDark ? "#ccc" : "#f4f3f4")}
 						/>
 					</View>
 				</View>
@@ -336,12 +339,12 @@ export default function AttendanceScreen() {
 	);
 
 	return (
-		<View style={styles.container}>
-			<View style={styles.header}>
-				<Pressable onPress={() => router.back()} style={styles.backBtn}>
-					<MaterialIcons name="arrow-back" size={24} color="#333" />
+		<View style={local.container}>
+			<View style={local.header}>
+				<Pressable onPress={() => router.back()} style={local.backBtn}>
+					<MaterialIcons name="arrow-back" size={24} color={isDark ? "#fff" : "#333"} />
 				</Pressable>
-				<Text style={styles.headerTitle}>{isGlobalView ? "All Attendance" : "Mark Attendance"}</Text>
+				<Text style={local.headerTitle}>{isGlobalView ? "All Attendance" : "Mark Attendance"}</Text>
 				<View style={{ width: 24 }} />
 			</View>
 
@@ -349,11 +352,11 @@ export default function AttendanceScreen() {
 				data={getFilteredLabours()}
 				renderItem={renderItem}
 				keyExtractor={(item) => item.id.toString()}
-				contentContainerStyle={styles.listContent}
+				contentContainerStyle={local.listContent}
 				ListHeaderComponent={ListHeader}
 				ListEmptyComponent={
 					!loading ? (
-						<Text style={styles.emptyText}>No labours found.</Text>
+						<Text style={local.emptyText}>No labours found.</Text>
 					) : null
 				}
 				refreshControl={
@@ -388,13 +391,13 @@ export default function AttendanceScreen() {
 			/>
 
 			{!isGlobalView && (
-				<View style={styles.footer}>
+				<View style={local.footer}>
 					<Pressable
-						style={[styles.submitBtn, (submitting || locked) && styles.submitBtnDisabled]}
+						style={[local.submitBtn, (submitting || locked) && local.submitBtnDisabled]}
 						onPress={handleSubmit}
 						disabled={submitting || locked}
 					>
-						<Text style={styles.submitBtnText}>
+						<Text style={local.submitBtnText}>
 							{submitting ? "Submitting..." : locked ? "Attendance Locked" : "Submit Attendance"}
 						</Text>
 					</Pressable>
@@ -404,17 +407,17 @@ export default function AttendanceScreen() {
 	);
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f5f5f5",
+		backgroundColor: isDark ? "#121212" : "#f5f5f5",
 	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
 		padding: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		elevation: 2,
 		marginTop: 20
 	},
@@ -424,17 +427,17 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: "bold",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	subHeader: {
 		padding: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		marginTop: 1,
 	},
 	siteName: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#0a84ff",
+		color: isDark ? "#4da6ff" : "#0a84ff",
 		marginBottom: 8,
 	},
 	listContent: {
@@ -442,7 +445,7 @@ const styles = StyleSheet.create({
 		paddingBottom: 100,
 	},
 	card: {
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		borderRadius: 12,
 		padding: 16,
 		marginBottom: 12,
@@ -454,11 +457,11 @@ const styles = StyleSheet.create({
 	labourName: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	labourRole: {
 		fontSize: 14,
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 		marginTop: 2,
 	},
 	statusContainer: {
@@ -475,12 +478,12 @@ const styles = StyleSheet.create({
 		borderColor: "transparent",
 	},
 	statusBtnActive: {
-		borderColor: "rgba(0,0,0,0.1)",
+		borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
 	},
 	statusText: {
 		fontSize: 14,
 		fontWeight: "500",
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 	},
 	statusTextActive: {
 		color: "#fff",
@@ -491,11 +494,11 @@ const styles = StyleSheet.create({
 		bottom: 0,
 		left: 0,
 		right: 0,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		padding: 16,
 		elevation: 4,
 		borderTopWidth: 1,
-		borderTopColor: "#eee",
+		borderTopColor: isDark ? "#333" : "#eee",
 	},
 	submitBtn: {
 		backgroundColor: "#0a84ff",
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	submitBtnDisabled: {
-		backgroundColor: "#a0cfff",
+		backgroundColor: isDark ? "#555" : "#a0cfff",
 	},
 	submitBtnText: {
 		color: "#fff",
@@ -514,7 +517,7 @@ const styles = StyleSheet.create({
 	emptyText: {
 		textAlign: "center",
 		marginTop: 40,
-		color: "#999",
+		color: isDark ? "#aaa" : "#999",
 		fontSize: 16,
 	},
 	filterContainer: {
@@ -524,22 +527,22 @@ const styles = StyleSheet.create({
 	},
 	filterLabel: {
 		fontSize: 14,
-		color: "#666",
+		color: isDark ? "#ccc" : "#666",
 	},
 	filterBtn: {
 		paddingHorizontal: 12,
 		paddingVertical: 6,
-		backgroundColor: "#e0e0e0",
+		backgroundColor: isDark ? "#333" : "#e0e0e0",
 		borderRadius: 16,
 	},
 	filterText: {
 		fontSize: 12,
 		fontWeight: "600",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	siteInfo: {
 		fontSize: 12,
-		color: "#0a84ff",
+		color: isDark ? "#64b5f6" : "#0a84ff",
 		marginTop: 2,
 		fontWeight: "500",
 	},
@@ -547,7 +550,7 @@ const styles = StyleSheet.create({
 	dateSelector: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#e8f4ff',
+		backgroundColor: isDark ? "#173a5a" : '#e8f4ff',
 		paddingHorizontal: 12,
 		paddingVertical: 8,
 		borderRadius: 8,
@@ -555,23 +558,23 @@ const styles = StyleSheet.create({
 	},
 	dateSelectorText: {
 		fontSize: 14,
-		color: '#0a84ff',
+		color: isDark ? "#64b5f6" : '#0a84ff',
 		fontWeight: '600',
 	},
 	foodToggleContainer: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		backgroundColor: '#fff',
+		backgroundColor: isDark ? "#1e1e1e" : '#fff',
 		paddingVertical: 8,
 		paddingHorizontal: 12,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: '#eee',
+		borderColor: isDark ? "#333" : '#eee',
 	},
 	foodToggleText: {
 		fontSize: 14,
-		color: '#333',
+		color: isDark ? "#fff" : '#333',
 		flex: 1,
 		marginRight: 8,
 	}

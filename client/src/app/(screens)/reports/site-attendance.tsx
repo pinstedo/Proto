@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useTheme } from "../../../context/ThemeContext";
 import { api } from "../../../services/api";
 
 interface SiteReport {
@@ -24,6 +25,8 @@ interface SiteReport {
 
 export default function SiteAttendanceReport() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
     const [loading, setLoading] = useState(true);
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -75,21 +78,25 @@ export default function SiteAttendanceReport() {
     };
 
     return (
-        <View style={styles.container}>
-            <Stack.Screen options={{ title: "Site Attendance Report" }} />
+        <View style={local.container}>
+            <Stack.Screen options={{
+                title: "Site Attendance Report",
+                headerStyle: { backgroundColor: isDark ? "#1e1e1e" : "#fff" },
+                headerTintColor: isDark ? "#fff" : "#000",
+            }} />
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => changeDate(-1)} style={styles.arrowBtn}>
-                    <Ionicons name="chevron-back" size={24} color="#333" />
+            <View style={local.header}>
+                <TouchableOpacity onPress={() => changeDate(-1)} style={local.arrowBtn}>
+                    <Ionicons name="chevron-back" size={24} color={isDark ? "#fff" : "#333"} />
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateDisplay}>
-                    <Ionicons name="calendar-outline" size={20} color="#555" style={{ marginRight: 8 }} />
-                    <Text style={styles.dateText}>{formatDate(date)}</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={local.dateDisplay}>
+                    <Ionicons name="calendar-outline" size={20} color={isDark ? "#aaa" : "#555"} style={{ marginRight: 8 }} />
+                    <Text style={local.dateText}>{formatDate(date)}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => changeDate(1)} style={styles.arrowBtn}>
-                    <Ionicons name="chevron-forward" size={24} color="#333" />
+                <TouchableOpacity onPress={() => changeDate(1)} style={local.arrowBtn}>
+                    <Ionicons name="chevron-forward" size={24} color={isDark ? "#fff" : "#333"} />
                 </TouchableOpacity>
             </View>
 
@@ -105,45 +112,45 @@ export default function SiteAttendanceReport() {
             {loading ? (
                 <ActivityIndicator size="large" color="#eb9834" style={{ marginTop: 40 }} />
             ) : (
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView contentContainerStyle={local.scrollContent}>
                     {reports.map((site) => (
-                        <View key={site.site_id} style={styles.card}>
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.siteName}>{site.site_name}</Text>
+                        <View key={site.site_id} style={local.card}>
+                            <View style={local.cardHeader}>
+                                <Text style={local.siteName}>{site.site_name}</Text>
                                 {site.is_submitted ? (
-                                    <View style={[styles.badge, styles.badgeSubmitted]}>
-                                        <Ionicons name="checkmark-circle" size={14} color="#155724" />
-                                        <Text style={styles.badgeTextSubmitted}>Submitted</Text>
+                                    <View style={[local.badge, local.badgeSubmitted]}>
+                                        <Ionicons name="checkmark-circle" size={14} color={isDark ? "#4caf50" : "#155724"} />
+                                        <Text style={local.badgeTextSubmitted}>Submitted</Text>
                                     </View>
                                 ) : (
-                                    <View style={[styles.badge, styles.badgePending]}>
-                                        <Ionicons name="time" size={14} color="#856404" />
-                                        <Text style={styles.badgeTextPending}>Pending</Text>
+                                    <View style={[local.badge, local.badgePending]}>
+                                        <Ionicons name="time" size={14} color={isDark ? "#ffb300" : "#856404"} />
+                                        <Text style={local.badgeTextPending}>Pending</Text>
                                     </View>
                                 )}
                             </View>
 
-                            <View style={styles.divider} />
+                            <View style={local.divider} />
 
-                            <View style={styles.statsRow}>
-                                <View style={styles.statItem}>
-                                    <Text style={styles.statLabel}>Present</Text>
-                                    <Text style={[styles.statValue, { color: '#28a745' }]}>{site.present_count}</Text>
+                            <View style={local.statsRow}>
+                                <View style={local.statItem}>
+                                    <Text style={local.statLabel}>Present</Text>
+                                    <Text style={[local.statValue, { color: isDark ? '#4caf50' : '#28a745' }]}>{site.present_count}</Text>
                                 </View>
-                                <View style={styles.statItem}>
-                                    <Text style={styles.statLabel}>Absent</Text>
-                                    <Text style={[styles.statValue, { color: '#dc3545' }]}>{site.absent_count}</Text>
+                                <View style={local.statItem}>
+                                    <Text style={local.statLabel}>Absent</Text>
+                                    <Text style={[local.statValue, { color: isDark ? '#ef5350' : '#dc3545' }]}>{site.absent_count}</Text>
                                 </View>
-                                <View style={styles.statItem}>
-                                    <Text style={styles.statLabel}>Total</Text>
-                                    <Text style={styles.statValue}>{site.total_labourers}</Text>
+                                <View style={local.statItem}>
+                                    <Text style={local.statLabel}>Total</Text>
+                                    <Text style={local.statValue}>{site.total_labourers}</Text>
                                 </View>
                             </View>
                         </View>
                     ))}
 
                     {reports.length === 0 && (
-                        <Text style={styles.emptyText}>No sites found.</Text>
+                        <Text style={local.emptyText}>No sites found.</Text>
                     )}
                 </ScrollView>
             )}
@@ -151,19 +158,19 @@ export default function SiteAttendanceReport() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f4f6f8",
+        backgroundColor: isDark ? "#121212" : "#f4f6f8",
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         padding: 15,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#e0e0e0",
+        borderBottomColor: isDark ? "#333" : "#e0e0e0",
     },
     arrowBtn: {
         padding: 10,
@@ -171,7 +178,7 @@ const styles = StyleSheet.create({
     dateDisplay: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#f0f0f0",
+        backgroundColor: isDark ? "#333" : "#f0f0f0",
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 20,
@@ -179,19 +186,19 @@ const styles = StyleSheet.create({
     dateText: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     scrollContent: {
         padding: 15,
     },
     card: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderRadius: 12,
         marginBottom: 15,
         padding: 15,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: isDark ? 0.3 : 0.05,
         shadowRadius: 4,
         elevation: 2,
     },
@@ -204,7 +211,7 @@ const styles = StyleSheet.create({
     siteName: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#222",
+        color: isDark ? "#fff" : "#222",
     },
     badge: {
         flexDirection: "row",
@@ -215,24 +222,24 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     badgeSubmitted: {
-        backgroundColor: "#d4edda",
+        backgroundColor: isDark ? "#1b4323" : "#d4edda",
     },
     badgePending: {
-        backgroundColor: "#fff3cd",
+        backgroundColor: isDark ? "#403107" : "#fff3cd",
     },
     badgeTextSubmitted: {
         fontSize: 12,
         fontWeight: "bold",
-        color: "#155724",
+        color: isDark ? "#4caf50" : "#155724",
     },
     badgeTextPending: {
         fontSize: 12,
         fontWeight: "bold",
-        color: "#856404",
+        color: isDark ? "#ffb300" : "#856404",
     },
     divider: {
         height: 1,
-        backgroundColor: "#eee",
+        backgroundColor: isDark ? "#333" : "#eee",
         marginVertical: 10,
     },
     statsRow: {
@@ -244,17 +251,17 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: 12,
-        color: "#666",
+        color: isDark ? "#aaa" : "#666",
         marginBottom: 4,
     },
     statValue: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     emptyText: {
         textAlign: "center",
-        color: "#999",
+        color: isDark ? "#aaa" : "#999",
         marginTop: 50,
         fontSize: 16,
     },

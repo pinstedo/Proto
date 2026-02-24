@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import { CustomModal, ModalType } from "../../components/CustomModal";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 import { styles as globalStyles, styles } from "../style/stylesheet";
 
@@ -24,10 +25,13 @@ interface Site {
 
 export default function AddLabour() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const local = getStyles(isDark);
   const params = useLocalSearchParams<{ siteId?: string; siteName?: string }>();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [aadhaar, setAadhaar] = useState("");
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [rate, setRate] = useState("");
@@ -119,6 +123,11 @@ export default function AddLabour() {
       return;
     }
 
+    if (!password || password.length < 6) {
+      showModal("Validation", "Please provide a password (minimum 6 characters).", 'warning');
+      return;
+    }
+
     if (aadhaar && aadhaar.length !== 12) {
       showModal("Validation", "Aadhaar number must be 12 digits.", 'warning');
       return;
@@ -133,6 +142,7 @@ export default function AddLabour() {
       const payload = {
         name,
         phone,
+        password,
         aadhaar,
         site: selectedSite?.name || "",
         site_id: selectedSite?.id || null,
@@ -161,23 +171,26 @@ export default function AddLabour() {
   return (
     <ScrollView contentContainerStyle={local.container}>
       <View style={local.header}>
-        <Text style={globalStyles.head1}>Add Labour</Text>
+        <Text style={[globalStyles.head1, { color: isDark ? "#fff" : "#000" }]}>Add Labour</Text>
         <Text style={local.sub}>Enter Labour details below</Text>
       </View>
 
       <View style={local.form}>
-        <Text style={styles.labelname}>Full name:</Text>
-        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="full name" />
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Full name:</Text>
+        <TextInput style={local.input} value={name} onChangeText={setName} placeholder="full name" placeholderTextColor={isDark ? "#888" : "#999"} />
 
-        <Text style={styles.labelname}>Phone:</Text>
-        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" keyboardType="phone-pad" maxLength={10} />
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Phone:</Text>
+        <TextInput style={local.input} value={phone} onChangeText={setPhone} placeholder="+9197589018" placeholderTextColor={isDark ? "#888" : "#999"} keyboardType="phone-pad" maxLength={10} />
 
-        <Text style={styles.labelname}>Aadhaar number:</Text>
-        <TextInput style={local.input} value={aadhaar} onChangeText={setAadhaar} placeholder="" keyboardType="phone-pad" maxLength={12} />
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Password:</Text>
+        <TextInput style={local.input} value={password} onChangeText={setPassword} placeholder="Minimum 6 characters" placeholderTextColor={isDark ? "#888" : "#999"} secureTextEntry />
 
-        <Text style={styles.labelname}>Date of Birth:</Text>
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Aadhaar number:</Text>
+        <TextInput style={local.input} value={aadhaar} onChangeText={setAadhaar} placeholder="" placeholderTextColor={isDark ? "#888" : "#999"} keyboardType="phone-pad" maxLength={12} />
+
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Date of Birth:</Text>
         <TouchableOpacity style={local.input} onPress={() => setShowDatePicker(true)}>
-          <Text style={{ color: dateOfBirth ? "#000" : "#999", paddingVertical: 4 }}>
+          <Text style={{ color: dateOfBirth ? (isDark ? "#fff" : "#000") : (isDark ? "#888" : "#999"), paddingVertical: 4 }}>
             {dateOfBirth ? formatDate(dateOfBirth) : "Select Date of Birth"}
           </Text>
         </TouchableOpacity>
@@ -194,29 +207,29 @@ export default function AddLabour() {
           />
         )}
 
-        <Text style={styles.labelname}>Job site:</Text>
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Job site:</Text>
         <TouchableOpacity
           style={local.siteSelector}
           onPress={() => setShowSitePicker(true)}
         >
           <View style={local.siteSelectorContent}>
-            <MaterialIcons name="location-city" size={20} color={selectedSite ? "#0a84ff" : "#999"} />
+            <MaterialIcons name="location-city" size={20} color={selectedSite ? "#0a84ff" : (isDark ? "#888" : "#999")} />
             <Text style={[local.siteSelectorText, !selectedSite && local.siteSelectorPlaceholder]}>
               {selectedSite ? selectedSite.name : "Select a site"}
             </Text>
           </View>
-          <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
+          <MaterialIcons name="arrow-drop-down" size={24} color={isDark ? "#888" : "#666"} />
         </TouchableOpacity>
 
         {userRole !== 'supervisor' && (
           <>
-            <Text style={styles.labelname}>Hourly rate:</Text>
-            <TextInput style={local.input} value={rate} onChangeText={setRate} placeholder="e.g., 15.00" keyboardType="decimal-pad" />
+            <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Hourly rate:</Text>
+            <TextInput style={local.input} value={rate} onChangeText={setRate} placeholder="e.g., 15.00" placeholderTextColor={isDark ? "#888" : "#999"} keyboardType="decimal-pad" />
           </>
         )}
 
-        <Text style={styles.labelname}>Notes:</Text>
-        <TextInput style={[local.input, { height: 90 }]} value={notes} onChangeText={setNotes} placeholder="Optional notes" multiline />
+        <Text style={[styles.labelname, { color: isDark ? "#aaa" : "#333" }]}>Notes:</Text>
+        <TextInput style={[local.input, { height: 90 }]} value={notes} onChangeText={setNotes} placeholder="Optional notes" placeholderTextColor={isDark ? "#888" : "#999"} multiline />
 
         <TouchableOpacity style={local.cancelBtn} onPress={() => router.back()}>
           <Text style={local.cancelBtnText}>Cancel</Text>
@@ -237,7 +250,7 @@ export default function AddLabour() {
         <View style={{ width: '100%', maxHeight: 300 }}>
           {sites.length === 0 ? (
             <View style={local.emptySites}>
-              <MaterialIcons name="location-off" size={48} color="#ccc" />
+              <MaterialIcons name="location-off" size={48} color={isDark ? "#555" : "#ccc"} />
               <Text style={local.emptySitesText}>
                 {userRole === "supervisor"
                   ? "No sites assigned to you"
@@ -262,7 +275,7 @@ export default function AddLabour() {
                   <MaterialIcons
                     name="location-city"
                     size={20}
-                    color={selectedSite?.id === item.id ? "#0a84ff" : "#666"}
+                    color={selectedSite?.id === item.id ? "#0a84ff" : (isDark ? "#888" : "#666")}
                   />
                   <View style={local.siteOptionInfo}>
                     <Text style={local.siteOptionName}>{item.name}</Text>
@@ -290,19 +303,19 @@ export default function AddLabour() {
   );
 }
 
-const local = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     padding: 20,
     paddingTop: 40,
     minHeight: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: isDark ? "#121212" : "#fff",
   },
   header: {
     alignItems: "center",
     marginBottom: 20,
   },
   sub: {
-    color: "#666",
+    color: isDark ? "#aaa" : "#666",
     marginTop: 6,
     fontSize: 16,
   },
@@ -311,20 +324,21 @@ const local = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e6e6e6",
+    borderColor: isDark ? "#444" : "#e6e6e6",
     padding: 10,
     borderRadius: 8,
-    backgroundColor: "#fafafa",
+    backgroundColor: isDark ? "#2a2a2a" : "#fafafa",
+    color: isDark ? "#fff" : "#000",
   },
   siteSelector: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: "#e6e6e6",
+    borderColor: isDark ? "#444" : "#e6e6e6",
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#fafafa",
+    backgroundColor: isDark ? "#2a2a2a" : "#fafafa",
   },
   siteSelectorContent: {
     flexDirection: "row",
@@ -333,20 +347,20 @@ const local = StyleSheet.create({
   },
   siteSelectorText: {
     fontSize: 16,
-    color: "#333",
+    color: isDark ? "#fff" : "#333",
   },
   siteSelectorPlaceholder: {
-    color: "#999",
+    color: isDark ? "#888" : "#999",
   },
   cancelBtn: {
     marginTop: 18,
-    backgroundColor: "#ddd",
+    backgroundColor: isDark ? "#333" : "#ddd",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
   },
   cancelBtnText: {
-    color: "#333",
+    color: isDark ? "#fff" : "#333",
     fontWeight: "700",
   },
   submit: {
@@ -365,7 +379,7 @@ const local = StyleSheet.create({
     padding: 32,
   },
   emptySitesText: {
-    color: "#999",
+    color: isDark ? "#888" : "#999",
     fontSize: 14,
     marginTop: 12,
     textAlign: "center",
@@ -375,11 +389,11 @@ const local = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: isDark ? "#333" : "#f0f0f0",
     gap: 12,
   },
   siteOptionSelected: {
-    backgroundColor: "#e8f4ff",
+    backgroundColor: isDark ? "#1a3b5c" : "#e8f4ff",
   },
   siteOptionInfo: {
     flex: 1,
@@ -387,11 +401,11 @@ const local = StyleSheet.create({
   siteOptionName: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: isDark ? "#fff" : "#333",
   },
   siteOptionAddress: {
     fontSize: 14,
-    color: "#666",
+    color: isDark ? "#aaa" : "#666",
     marginTop: 2,
   },
 });

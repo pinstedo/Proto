@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { API_URL } from "../../constants";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 // Helper for date formatting
@@ -28,6 +29,8 @@ interface OvertimeRecord {
 
 export default function OvertimeScreen() {
 	const router = useRouter();
+	const { isDark } = useTheme();
+	const local = getStyles(isDark);
 	const { siteId, siteName } = useLocalSearchParams();
 	const [labours, setLabours] = useState<Labour[]>([]);
 	const [overtimeData, setOvertimeData] = useState<Map<number, OvertimeRecord>>(new Map());
@@ -65,6 +68,15 @@ export default function OvertimeScreen() {
 		try {
 			if (!isRefresh) setLoading(true);
 			let url = `${API_URL}/labours?status=active`;
+
+			const userDataStr = await AsyncStorage.getItem("userData");
+			if (userDataStr) {
+				const userData = JSON.parse(userDataStr);
+				if (userData.role === "supervisor") {
+					url += `&supervisor_id=${userData.id}`;
+				}
+			}
+
 			if (siteId) {
 				// If backend supports filtering by site
 				url = `${API_URL}/sites/${siteId}/labours`;
@@ -210,37 +222,38 @@ export default function OvertimeScreen() {
 		const rate = item.rate || 0;
 
 		return (
-			<View style={styles.card}>
-				<View style={styles.cardHeader}>
+			<View style={local.card}>
+				<View style={local.cardHeader}>
 					<View>
-						<Text style={styles.labourName}>{item.name}</Text>
-						<Text style={styles.labourRole}>{item.role}</Text>
+						<Text style={local.labourName}>{item.name}</Text>
+						<Text style={local.labourRole}>{item.role}</Text>
 						{isGlobalView && item.site && (
-							<Text style={styles.siteInfo}>Site: {item.site}</Text>
+							<Text style={local.siteInfo}>Site: {item.site}</Text>
 						)}
 						{isAdmin && (
-							<Text style={styles.rateInfo}>Rate: ₹{rate}/hr</Text>
+							<Text style={local.rateInfo}>Rate: ₹{rate}/hr</Text>
 						)}
 					</View>
 				</View>
 
-				<View style={styles.inputRow}>
-					<View style={styles.inputContainer}>
-						<Text style={styles.label}>Hours</Text>
+				<View style={local.inputRow}>
+					<View style={local.inputContainer}>
+						<Text style={local.label}>Hours</Text>
 						<TextInput
-							style={styles.input}
+							style={local.input}
 							value={hours}
 							onChangeText={(text) => handleHoursChange(item, text)}
 							keyboardType="numeric"
 							placeholder="0"
+							placeholderTextColor={isDark ? "#888" : "#999"}
 						/>
 					</View>
 
 					{isAdmin && (
-						<View style={styles.inputContainer}>
-							<Text style={styles.label}>Amount</Text>
+						<View style={local.inputContainer}>
+							<Text style={local.label}>Amount</Text>
 							<TextInput
-								style={[styles.input, styles.readOnlyInput]}
+								style={[local.input, local.readOnlyInput]}
 								value={amount}
 								editable={false}
 							/>
@@ -253,25 +266,25 @@ export default function OvertimeScreen() {
 	};
 
 	return (
-		<View style={styles.container}>
-			<View style={styles.header}>
-				<Pressable onPress={() => router.back()} style={styles.backBtn}>
-					<MaterialIcons name="arrow-back" size={24} color="#333" />
+		<View style={local.container}>
+			<View style={local.header}>
+				<Pressable onPress={() => router.back()} style={local.backBtn}>
+					<MaterialIcons name="arrow-back" size={24} color={isDark ? "#fff" : "#333"} />
 				</Pressable>
-				<Text style={styles.headerTitle}>Overtime</Text>
+				<Text style={local.headerTitle}>Overtime</Text>
 				<View style={{ width: 24 }} />
 			</View>
 
-			<View style={styles.subHeader}>
+			<View style={local.subHeader}>
 				{siteName ? (
-					<Text style={styles.siteName}>{decodeURIComponent(siteName as string)}</Text>
+					<Text style={local.siteName}>{decodeURIComponent(siteName as string)}</Text>
 				) : (
-					<Text style={styles.siteName}>All Sites</Text>
+					<Text style={local.siteName}>All Sites</Text>
 				)}
 				{/* Simple Date Display/Control */}
-				<View style={styles.dateContainer}>
-					<Text style={styles.dateLabel}>Date:</Text>
-					<Text style={styles.dateText}>{formatDate(date)}</Text>
+				<View style={local.dateContainer}>
+					<Text style={local.dateLabel}>Date:</Text>
+					<Text style={local.dateText}>{formatDate(date)}</Text>
 				</View>
 			</View>
 
@@ -279,22 +292,22 @@ export default function OvertimeScreen() {
 				data={labours}
 				renderItem={renderItem}
 				keyExtractor={(item) => item.id.toString()}
-				contentContainerStyle={styles.listContent}
+				contentContainerStyle={local.listContent}
 				ListEmptyComponent={
-					!loading ? <Text style={styles.emptyText}>No labours found.</Text> : null
+					!loading ? <Text style={local.emptyText}>No labours found.</Text> : null
 				}
 				refreshControl={
 					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
 				}
 			/>
 
-			<View style={styles.footer}>
+			<View style={local.footer}>
 				<Pressable
-					style={[styles.submitBtn, submitting && styles.disabledBtn]}
+					style={[local.submitBtn, submitting && local.disabledBtn]}
 					onPress={handleSubmit}
 					disabled={submitting}
 				>
-					<Text style={styles.submitBtnText}>
+					<Text style={local.submitBtnText}>
 						{submitting ? "Submitting..." : "Submit Overtime"}
 					</Text>
 				</Pressable>
@@ -303,17 +316,17 @@ export default function OvertimeScreen() {
 	);
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f5f5f5",
+		backgroundColor: isDark ? "#121212" : "#f5f5f5",
 	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
 		padding: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		elevation: 2,
 		marginTop: 20
 	},
@@ -323,11 +336,11 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: "bold",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	subHeader: {
 		padding: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		marginTop: 1,
 		flexDirection: "row",
 		justifyContent: "space-between",
@@ -336,31 +349,31 @@ const styles = StyleSheet.create({
 	siteName: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#0a84ff",
+		color: isDark ? "#4da6ff" : "#0a84ff",
 	},
 	dateContainer: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#f0f0f0",
+		backgroundColor: isDark ? "#333" : "#f0f0f0",
 		padding: 8,
 		borderRadius: 8,
 	},
 	dateLabel: {
 		fontSize: 14,
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 		marginRight: 8,
 	},
 	dateText: {
 		fontSize: 14,
 		fontWeight: "bold",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	listContent: {
 		padding: 16,
 		paddingBottom: 40,
 	},
 	card: {
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		borderRadius: 12,
 		padding: 16,
 		marginBottom: 12,
@@ -374,21 +387,21 @@ const styles = StyleSheet.create({
 	labourName: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 	},
 	labourRole: {
 		fontSize: 14,
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 		marginTop: 2,
 	},
 	siteInfo: {
 		fontSize: 12,
-		color: "#0a84ff",
+		color: isDark ? "#64b5f6" : "#0a84ff",
 		marginTop: 2,
 	},
 	rateInfo: {
 		fontSize: 12,
-		color: "#4CAF50",
+		color: isDark ? "#4caf50" : "#4CAF50",
 		marginTop: 2,
 		fontWeight: "bold",
 	},
@@ -402,33 +415,35 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		fontSize: 12,
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 		marginBottom: 4,
 	},
 	input: {
 		borderWidth: 1,
-		borderColor: "#ddd",
+		borderColor: isDark ? "#444" : "#ddd",
 		borderRadius: 8,
 		padding: 10,
 		fontSize: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#2a2a2a" : "#fff",
+		color: isDark ? "#fff" : "#333",
 	},
 	readOnlyInput: {
-		backgroundColor: "#f9f9f9",
-		color: "#666",
+		backgroundColor: isDark ? "#1a1a1a" : "#f9f9f9",
+		color: isDark ? "#888" : "#666",
+		borderColor: isDark ? "#333" : "#ddd",
 	},
 
 	emptyText: {
 		textAlign: "center",
 		marginTop: 40,
-		color: "#999",
+		color: isDark ? "#aaa" : "#999",
 		fontSize: 16,
 	},
 	footer: {
 		padding: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		borderTopWidth: 1,
-		borderTopColor: "#eee",
+		borderTopColor: isDark ? "#333" : "#eee",
 	},
 	submitBtn: {
 		backgroundColor: "#0a84ff",
@@ -438,7 +453,7 @@ const styles = StyleSheet.create({
 		elevation: 2,
 	},
 	disabledBtn: {
-		backgroundColor: "#a0cfff",
+		backgroundColor: isDark ? "#555" : "#a0cfff",
 	},
 	submitBtnText: {
 		color: "#fff",

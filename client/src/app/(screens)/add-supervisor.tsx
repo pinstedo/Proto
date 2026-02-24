@@ -12,10 +12,14 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 export default function AddSupervisorScreen() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
+
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
@@ -72,44 +76,44 @@ export default function AddSupervisorScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
+            style={local.container}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
+            <ScrollView contentContainerStyle={local.scrollContent}>
+                <View style={local.header}>
                     <TouchableOpacity
                         onPress={() => router.back()}
-                        style={styles.backButton}
+                        style={local.backButton}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#333" />
+                        <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : "#333"} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Add Supervisor</Text>
+                    <Text style={local.title}>Add Supervisor</Text>
                 </View>
 
-                <View style={styles.formContainer}>
-                    <Text style={styles.sectionTitle}>New Account Details</Text>
+                <View style={local.formContainer}>
+                    <Text style={local.sectionTitle}>New Account Details</Text>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Full Name</Text>
-                        <View style={styles.inputContainer}>
-                            <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <View style={local.inputGroup}>
+                        <Text style={local.label}>Full Name</Text>
+                        <View style={local.inputContainer}>
+                            <Ionicons name="person-outline" size={20} color={isDark ? "#aaa" : "#666"} style={local.inputIcon} />
                             <TextInput
-                                style={styles.input}
+                                style={local.input}
                                 placeholder="Ex: John Doe"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={isDark ? "#888" : "#999"}
                                 onChangeText={setName}
                                 value={name}
                             />
                         </View>
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Phone Number</Text>
-                        <View style={styles.inputContainer}>
-                            <Ionicons name="call-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <View style={local.inputGroup}>
+                        <Text style={local.label}>Phone Number</Text>
+                        <View style={local.inputContainer}>
+                            <Ionicons name="call-outline" size={20} color={isDark ? "#aaa" : "#666"} style={local.inputIcon} />
                             <TextInput
-                                style={styles.input}
+                                style={local.input}
                                 placeholder="10 digit number"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={isDark ? "#888" : "#999"}
                                 onChangeText={setPhone}
                                 value={phone}
                                 keyboardType="phone-pad"
@@ -118,37 +122,37 @@ export default function AddSupervisorScreen() {
                         </View>
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Password</Text>
-                        <View style={styles.inputContainer}>
-                            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <View style={local.inputGroup}>
+                        <Text style={local.label}>Password</Text>
+                        <View style={local.inputContainer}>
+                            <Ionicons name="lock-closed-outline" size={20} color={isDark ? "#aaa" : "#666"} style={local.inputIcon} />
                             <TextInput
-                                style={styles.input}
+                                style={local.input}
                                 placeholder="Min 6 characters"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={isDark ? "#888" : "#999"}
                                 onChangeText={setPassword}
                                 value={password}
                                 secureTextEntry={!showPassword}
                             />
                             <TouchableOpacity
                                 onPress={() => setShowPassword(!showPassword)}
-                                style={styles.eyeIcon}
+                                style={local.eyeIcon}
                             >
                                 <Ionicons
                                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                                     size={20}
-                                    color="#666"
+                                    color={isDark ? "#aaa" : "#666"}
                                 />
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.submitButton, loading && styles.disabledButton]}
+                        style={[local.submitButton, loading && local.disabledButton]}
                         onPress={handleAddSupervisor}
                         disabled={loading}
                     >
-                        <Text style={styles.submitButtonText}>
+                        <Text style={local.submitButtonText}>
                             {loading ? "Creating..." : "Create Account"}
                         </Text>
                     </TouchableOpacity>
@@ -158,10 +162,10 @@ export default function AddSupervisorScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f6fa",
+        backgroundColor: isDark ? "#121212" : "#f5f6fa",
     },
     scrollContent: {
         flexGrow: 1,
@@ -176,34 +180,34 @@ const styles = StyleSheet.create({
     backButton: {
         padding: 8,
         borderRadius: 8,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         marginRight: 15,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
+        shadowOpacity: isDark ? 0.3 : 0.1,
         shadowRadius: 2,
         elevation: 2,
     },
     title: {
         fontSize: 24,
         fontWeight: "700",
-        color: "#2d3436",
+        color: isDark ? "#fff" : "#2d3436",
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#636e72",
+        color: isDark ? "#aaa" : "#636e72",
         marginBottom: 20,
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
     formContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderRadius: 16,
         padding: 20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: isDark ? 0.3 : 0.05,
         shadowRadius: 8,
         elevation: 3,
     },
@@ -213,17 +217,17 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#2d3436",
+        color: isDark ? "#ccc" : "#2d3436",
         marginBottom: 8,
         marginLeft: 4,
     },
     inputContainer: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#f5f6fa",
+        backgroundColor: isDark ? "#2a2a2a" : "#f5f6fa",
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#e1e1e1",
+        borderColor: isDark ? "#444" : "#e1e1e1",
         paddingHorizontal: 15,
         height: 50,
     },
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 16,
-        color: "#2d3436",
+        color: isDark ? "#fff" : "#2d3436",
         height: "100%",
     },
     eyeIcon: {

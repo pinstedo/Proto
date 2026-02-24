@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { CustomModal, ModalType } from "../../components/CustomModal";
 import { API_URL } from "../../constants";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 import { LabourCard } from "../components/LabourCard";
 
@@ -34,6 +35,8 @@ interface Labour {
 
 export default function Labours() {
 	const router = useRouter();
+	const { isDark } = useTheme();
+	const local = getStyles(isDark);
 	const { newLabour, supervisorId, status } = useLocalSearchParams();
 	const [viewType, setViewType] = useState<'active' | 'inactive'>((status as 'active' | 'inactive') || 'active');
 	const [labours, setLabours] = useState<Labour[]>([]);
@@ -299,7 +302,7 @@ export default function Labours() {
 								<MaterialIcons
 									name="location-city"
 									size={20}
-									color={selectedLabour?.site_id === item.id ? "#0a84ff" : "#666"}
+									color={selectedLabour?.site_id === item.id ? "#0a84ff" : (isDark ? "#888" : "#666")}
 								/>
 								<Text
 									style={[
@@ -330,11 +333,11 @@ export default function Labours() {
 	);
 }
 
-const local = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
 	container: {
 		flex: 1,
 		paddingTop: 40,
-		backgroundColor: "#f5f5f5",
+		backgroundColor: isDark ? "#121212" : "#f5f5f5",
 	},
 	headerRow: {
 		width: "100%",
@@ -343,13 +346,13 @@ const local = StyleSheet.create({
 		justifyContent: "space-between",
 		paddingHorizontal: 20,
 		paddingBottom: 16,
-		backgroundColor: "#fff",
+		backgroundColor: isDark ? "#1e1e1e" : "#fff",
 		borderBottomWidth: 1,
-		borderBottomColor: "#eee",
+		borderBottomColor: isDark ? "#333" : "#eee",
 	},
 	backBtn: { paddingVertical: 6, paddingHorizontal: 8 },
-	backText: { color: "#0a84ff", fontWeight: "600", fontSize: 16 },
-	header: { fontSize: 20, fontWeight: "700", color: "#333" },
+	backText: { color: isDark ? "#4da6ff" : "#0a84ff", fontWeight: "600", fontSize: 16 },
+	header: { fontSize: 20, fontWeight: "700", color: isDark ? "#fff" : "#333" },
 	listContent: {
 		padding: 16,
 		paddingBottom: 100,
@@ -357,7 +360,7 @@ const local = StyleSheet.create({
 	emptyText: {
 		textAlign: "center",
 		marginTop: 40,
-		color: "#999",
+		color: isDark ? "#aaa" : "#999",
 		fontSize: 16,
 	},
 	siteOption: {
@@ -365,24 +368,24 @@ const local = StyleSheet.create({
 		alignItems: "center",
 		paddingVertical: 14,
 		borderBottomWidth: 1,
-		borderBottomColor: "#f9f9f9",
+		borderBottomColor: isDark ? "#333" : "#f9f9f9",
 		gap: 12,
 	},
 	siteOptionName: {
 		fontSize: 16,
-		color: "#333",
+		color: isDark ? "#fff" : "#333",
 		flex: 1,
 	},
 	loadingText: {
 		textAlign: "center",
 		padding: 20,
-		color: "#666",
+		color: isDark ? "#aaa" : "#666",
 	},
 	toggleContainer: {
 		flexDirection: 'row',
 		paddingHorizontal: 20,
 		marginBottom: 10,
-		backgroundColor: '#fff',
+		backgroundColor: isDark ? "#1e1e1e" : '#fff',
 		paddingBottom: 10,
 	},
 	toggleBtn: {
@@ -393,15 +396,15 @@ const local = StyleSheet.create({
 		borderBottomColor: 'transparent',
 	},
 	toggleBtnActive: {
-		borderBottomColor: '#0a84ff',
+		borderBottomColor: isDark ? "#4da6ff" : '#0a84ff',
 	},
 	toggleText: {
 		fontSize: 16,
-		color: '#666',
+		color: isDark ? "#aaa" : '#666',
 		fontWeight: '500',
 	},
 	toggleTextActive: {
-		color: '#0a84ff',
+		color: isDark ? "#4da6ff" : '#0a84ff',
 		fontWeight: '700',
 	}
 });

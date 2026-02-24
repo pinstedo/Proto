@@ -3,10 +3,13 @@ import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../../context/ThemeContext';
 import { api } from '../../../services/api'; // Adjust path as needed
 
 export default function WageReportScreen() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [reportData, setReportData] = useState<any[]>([]);
@@ -360,13 +363,13 @@ export default function WageReportScreen() {
 
             <View style={local.controls}>
                 <TouchableOpacity onPress={() => changeMonth(-1)} style={local.arrowBtn}>
-                    <MaterialIcons name="chevron-left" size={30} color="#333" />
+                    <MaterialIcons name="chevron-left" size={30} color={isDark ? "#fff" : "#333"} />
                 </TouchableOpacity>
                 <Text style={local.monthText}>
                     {date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                 </Text>
                 <TouchableOpacity onPress={() => changeMonth(1)} style={local.arrowBtn}>
-                    <MaterialIcons name="chevron-right" size={30} color="#333" />
+                    <MaterialIcons name="chevron-right" size={30} color={isDark ? "#fff" : "#333"} />
                 </TouchableOpacity>
             </View>
 
@@ -420,11 +423,11 @@ export default function WageReportScreen() {
                         disabled={generatingPdf}
                     >
                         {generatingPdf ? (
-                            <ActivityIndicator color="#0a84ff" style={{ marginRight: 10 }} />
+                            <ActivityIndicator color={isDark ? "#4da6ff" : "#0a84ff"} style={{ marginRight: 10 }} />
                         ) : (
-                            <MaterialIcons name="print" size={24} color="#0a84ff" />
+                            <MaterialIcons name="print" size={24} color={isDark ? "#4da6ff" : "#0a84ff"} />
                         )}
-                        <Text style={[local.btnText, { color: '#0a84ff' }]}>
+                        <Text style={[local.btnText, { color: isDark ? '#4da6ff' : '#0a84ff' }]}>
                             {generatingPdf ? "Preparing Print..." : "Print / Save Individual Bills"}
                         </Text>
                     </TouchableOpacity>
@@ -439,43 +442,43 @@ export default function WageReportScreen() {
     );
 }
 
-const local = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5', paddingTop: 40 },
+const getStyles = (isDark: boolean) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: isDark ? '#121212' : '#f5f5f5', paddingTop: 40 },
     headerRow: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: 20, paddingBottom: 15, backgroundColor: '#fff',
-        borderBottomWidth: 1, borderBottomColor: '#eee'
+        paddingHorizontal: 20, paddingBottom: 15, backgroundColor: isDark ? '#1e1e1e' : '#fff',
+        borderBottomWidth: 1, borderBottomColor: isDark ? '#333' : '#eee'
     },
     backBtn: { padding: 5 },
-    backText: { color: '#0a84ff', fontSize: 16 },
-    headerTitle: { fontSize: 20, fontWeight: 'bold' },
+    backText: { color: isDark ? '#4da6ff' : '#0a84ff', fontSize: 16 },
+    headerTitle: { fontSize: 20, fontWeight: 'bold', color: isDark ? '#fff' : '#000' },
     controls: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-        padding: 20, backgroundColor: '#fff', marginTop: 10, marginHorizontal: 20,
+        padding: 20, backgroundColor: isDark ? '#1e1e1e' : '#fff', marginTop: 10, marginHorizontal: 20,
         borderRadius: 10, elevation: 2
     },
     arrowBtn: { padding: 10 },
-    monthText: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 20, minWidth: 150, textAlign: 'center' },
+    monthText: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#fff' : '#000', marginHorizontal: 20, minWidth: 150, textAlign: 'center' },
     content: { padding: 20 },
     summaryCard: {
-        backgroundColor: '#fff', padding: 20, borderRadius: 12, marginBottom: 20, elevation: 2
+        backgroundColor: isDark ? '#1e1e1e' : '#fff', padding: 20, borderRadius: 12, marginBottom: 20, elevation: 2
     },
-    summaryTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333' },
+    summaryTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: isDark ? '#fff' : '#333' },
     row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    label: { fontSize: 16, color: '#666' },
-    value: { fontSize: 18, fontWeight: 'bold', color: '#0a84ff' },
-    vVal: { fontSize: 16, fontWeight: '600', color: '#333' },
+    label: { fontSize: 16, color: isDark ? '#bbb' : '#666' },
+    value: { fontSize: 18, fontWeight: 'bold', color: isDark ? '#4da6ff' : '#0a84ff' },
+    vVal: { fontSize: 16, fontWeight: '600', color: isDark ? '#eee' : '#333' },
     pdfBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         backgroundColor: '#0a84ff', padding: 16, borderRadius: 12, marginBottom: 15,
         elevation: 2
     },
     secondaryBtn: {
-        backgroundColor: '#fff', borderWidth: 1, borderColor: '#0a84ff'
+        backgroundColor: isDark ? '#1e1e1e' : '#fff', borderWidth: 1, borderColor: isDark ? '#4da6ff' : '#0a84ff'
     },
     disabledBtn: {
         opacity: 0.7
     },
     btnText: { color: '#fff', fontSize: 16, fontWeight: '600', marginLeft: 10 },
-    note: { textAlign: 'center', color: '#888', fontStyle: 'italic', marginTop: 20 }
+    note: { textAlign: 'center', color: isDark ? '#777' : '#888', fontStyle: 'italic', marginTop: 20 }
 });

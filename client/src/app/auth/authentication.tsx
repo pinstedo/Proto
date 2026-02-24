@@ -1,39 +1,54 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
 import { API_URL } from "../../constants";
-import { styles } from "../style/stylesheet";
+import { useTheme } from "../../context/ThemeContext";
 
-const App = () => {
+export default function SignUpScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const styles = getStyles(isDark);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
     if (!name.trim()) {
-      Alert.alert("Validation Error", "Please enter your name.");
+      Alert.alert("Validation", "Please enter your name.");
       return;
     }
     if (!phone.trim()) {
-      Alert.alert("Validation Error", "Please enter your phone number.");
+      Alert.alert("Validation", "Please enter your phone number.");
       return;
     }
     if (phone.trim().length < 10) {
-      Alert.alert("Validation Error", "Phone number must be at least 10 digits.");
+      Alert.alert("Validation", "Phone number must be at least 10 digits.");
       return;
     }
     if (!password.trim()) {
-      Alert.alert("Validation Error", "Please enter a password.");
+      Alert.alert("Validation", "Please enter a password.");
       return;
     }
     if (password.trim().length < 6) {
-      Alert.alert("Validation Error", "Password must be at least 6 characters.");
+      Alert.alert("Validation", "Password must be at least 6 characters.");
       return;
     }
 
     try {
+      setLoading(true);
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,7 +58,6 @@ const App = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Store user data and token
         await AsyncStorage.setItem("userData", JSON.stringify(data.user));
         await AsyncStorage.setItem("token", data.accessToken);
         await AsyncStorage.setItem("refreshToken", data.refreshToken);
@@ -57,59 +71,187 @@ const App = () => {
     } catch (error) {
       console.error("Sign up error:", error);
       Alert.alert("Error", "Unable to connect to server");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const onPressSignInButton = () => {
-    router.push("/auth/authentication2" as any);
   };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.keyboardView}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.head1}>Welcome to rayan</Text>
-        <Text style={styles.head}>Sign up To continue</Text>
-        <Text style={styles.labelname}>Name</Text>
-        <TextInput
-          style={styles.valbox}
-          placeholder="muhammed fasal"
-          onChangeText={(text) => setName(text)}
-          value={name}
-        />
-        <Text style={styles.labelname}>Phone Number</Text>
-        <TextInput
-          style={styles.valbox}
-          onChangeText={(text) => setPhone(text)}
-          value={phone}
-          placeholder="Enter 10 digit phone number"
-          keyboardType="phone-pad"
-        />
-        <Text style={styles.labelname}>Password</Text>
-        <TextInput
-          style={styles.valbox}
-          onChangeText={(text) => setPassword(text)}
-          value={password}
-          secureTextEntry
-        />
-        <TouchableOpacity onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onPressSignInButton}>
-          <Text style={styles.linkstyle}>(Sign In)</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/auth/labour-login" as any)}>
-          <Text style={styles.linkstyle}>(Labour Login)</Text>
-        </TouchableOpacity>
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
+        </View>
+
+        <View style={styles.formContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your full name"
+              placeholderTextColor={isDark ? "#888" : "#A0AEC0"}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter 10-digit phone number"
+              placeholderTextColor={isDark ? "#888" : "#A0AEC0"}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Create a strong password"
+              placeholderTextColor={isDark ? "#888" : "#A0AEC0"}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+            onPress={handleSignUp}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push("/auth/authentication2" as any)}>
+            <Text style={styles.signInLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
-};
+}
 
-export default App;
+const getStyles = (isDark: boolean) => StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+    backgroundColor: isDark ? "#121212" : "#FFFFFF",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 40,
+    justifyContent: "center",
+  },
+  headerContainer: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: isDark ? "#fff" : "#1A202C",
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: isDark ? "#aaa" : "#718096",
+    fontWeight: "400",
+  },
+  formContainer: {
+    width: "100%",
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: isDark ? "#bbb" : "#4A5568",
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  input: {
+    height: 56,
+    backgroundColor: isDark ? "#1e1e1e" : "#F7FAFC",
+    borderWidth: 1,
+    borderColor: isDark ? "#333" : "#E2E8F0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: isDark ? "#fff" : "#1A202C",
+  },
+  primaryButton: {
+    height: 56,
+    backgroundColor: "#3182CE",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: "#3182CE",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.5 : 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: isDark ? "#2c5282" : "#90CDF4",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+  },
+  footerText: {
+    fontSize: 15,
+    color: isDark ? "#aaa" : "#718096",
+  },
+  signInLink: {
+    fontSize: 15,
+    color: isDark ? "#63b3ed" : "#3182CE",
+    fontWeight: "700",
+  },
+  labourLoginButton: {
+    marginTop: 32,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  labourLoginText: {
+    fontSize: 14,
+    color: isDark ? "#aaa" : "#A0AEC0",
+    fontWeight: "500",
+    textDecorationLine: "underline",
+  },
+});

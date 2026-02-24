@@ -49,6 +49,8 @@ export default function SplashScreen() {
 									router.replace("/(tabs)/home");
 								} else if (user.role === 'supervisor') {
 									router.replace("/supervisor/(tabs)/home" as any);
+								} else if (user.role === 'labour') {
+									router.replace("/(labour)/dashboard" as any);
 								} else {
 									router.replace("/(tabs)/home");
 								}
@@ -64,6 +66,8 @@ export default function SplashScreen() {
 							router.replace("/(tabs)/home");
 						} else if (user.role === 'supervisor') {
 							router.replace("/supervisor/(tabs)/home" as any);
+						} else if (user.role === 'labour') {
+							router.replace("/(labour)/dashboard" as any);
 						} else {
 							router.replace("/(tabs)/home");
 						}
@@ -75,7 +79,7 @@ export default function SplashScreen() {
 			}
 
 			// Default to login if checks fail
-			router.replace("/auth/authentication" as any);
+			router.replace("/auth/authentication2" as any);
 		};
 
 		// Minimal delay to show splash

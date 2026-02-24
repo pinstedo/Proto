@@ -1,6 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 interface CalendarProps {
     selectedDate: Date;
@@ -16,6 +17,8 @@ const MONTHS = [
 ];
 
 export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect, markedDates, onMonthChange }) => {
+    const { isDark } = useTheme();
+    const styles = getStyles(isDark);
     const [currentDate, setCurrentDate] = useState(new Date(selectedDate));
 
     useEffect(() => {
@@ -95,13 +98,13 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect, 
             }
 
             if (isFuture) {
-                textStyle = { ...textStyle, color: "#ccc" };
+                textStyle = { ...textStyle, color: isDark ? "#555" : "#ccc" };
             } else if (isMarked) {
-                bgStyle = { backgroundColor: "#d4edda" }; // Light green
-                textStyle = { ...textStyle, color: "#155724" };
+                bgStyle = { backgroundColor: isDark ? "#1b4323" : "#d4edda" }; // Light green
+                textStyle = { ...textStyle, color: isDark ? "#4caf50" : "#155724" };
             } else if (isUnmarkedPast) {
-                bgStyle = { backgroundColor: "#f8d7da" }; // Light red
-                textStyle = { ...textStyle, color: "#721c24" };
+                bgStyle = { backgroundColor: isDark ? "#4a1c1f" : "#f8d7da" }; // Light red
+                textStyle = { ...textStyle, color: isDark ? "#ef5350" : "#721c24" };
             }
 
             days.push(
@@ -134,13 +137,13 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect, 
         <View style={styles.container}>
             <View style={styles.header}>
                 <Pressable onPress={handlePrevMonth} style={styles.arrowBtn}>
-                    <MaterialIcons name="chevron-left" size={24} color="#333" />
+                    <MaterialIcons name="chevron-left" size={24} color={isDark ? "#fff" : "#333"} />
                 </Pressable>
                 <Text style={styles.monthText}>
                     {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </Text>
                 <Pressable onPress={handleNextMonth} style={styles.arrowBtn}>
-                    <MaterialIcons name="chevron-right" size={24} color="#333" />
+                    <MaterialIcons name="chevron-right" size={24} color={isDark ? "#fff" : "#333"} />
                 </Pressable>
             </View>
 
@@ -157,15 +160,15 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect, 
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? "#1e1e1e" : '#fff',
         borderRadius: 12,
         padding: 10,
         marginBottom: 16,
         elevation: 1,
         borderWidth: 1,
-        borderColor: '#eee',
+        borderColor: isDark ? "#333" : '#eee',
     },
     header: {
         flexDirection: 'row',
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     monthText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#333',
+        color: isDark ? "#fff" : '#333',
     },
     arrowBtn: {
         padding: 5,
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
     weekDayText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#999',
+        color: isDark ? "#aaa" : '#999',
         width: '14.28%',
         textAlign: 'center',
     },
@@ -207,17 +210,17 @@ const styles = StyleSheet.create({
     },
     dayText: {
         fontSize: 14,
-        color: '#333',
+        color: isDark ? "#fff" : '#333',
     },
     selectedDay: {
         borderWidth: 2,
-        borderColor: '#0a84ff',
+        borderColor: isDark ? "#4da6ff" : '#0a84ff',
     },
     selectedDayText: {
         fontWeight: 'bold',
     },
     todayText: {
         fontWeight: 'bold',
-        color: '#0a84ff', // Or make today have a specific indicator
+        color: isDark ? "#4da6ff" : '#0a84ff', // Or make today have a specific indicator
     }
 });

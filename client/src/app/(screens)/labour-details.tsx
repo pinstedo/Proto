@@ -14,6 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 interface Labour {
@@ -35,6 +36,8 @@ interface Labour {
 export default function LabourDetailsScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -110,7 +113,7 @@ export default function LabourDetailsScreen() {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
+            <View style={local.loadingContainer}>
                 <ActivityIndicator size="large" color="#0a84ff" />
             </View>
         );
@@ -119,20 +122,21 @@ export default function LabourDetailsScreen() {
     if (!labour) return null;
 
     const DetailItem = ({ label, value, icon, isEditable = false, field, keyboardType = 'default' }: any) => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={[styles.inputContainer, !isEditing && styles.readOnlyContainer]}>
-                <Ionicons name={icon} size={20} color="#666" style={styles.inputIcon} />
+        <View style={local.inputGroup}>
+            <Text style={local.label}>{label}</Text>
+            <View style={[local.inputContainer, !isEditing && local.readOnlyContainer]}>
+                <Ionicons name={icon} size={20} color={isDark ? "#aaa" : "#666"} style={local.inputIcon} />
                 {isEditing && isEditable ? (
                     <TextInput
-                        style={styles.input}
+                        style={local.input}
                         value={String(field ? (formData as any)[field] || "" : value)}
                         onChangeText={(text) => setFormData(prev => ({ ...prev, [field]: text }))}
                         editable={true}
                         keyboardType={keyboardType}
+                        placeholderTextColor={isDark ? "#888" : "#999"}
                     />
                 ) : (
-                    <Text style={styles.inputText}>{value || "-"}</Text>
+                    <Text style={local.inputText}>{value || "-"}</Text>
                 )}
             </View>
         </View>
@@ -141,17 +145,17 @@ export default function LabourDetailsScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
+            style={local.container}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
+            <ScrollView contentContainerStyle={local.scrollContent}>
+                <View style={local.header}>
                     <TouchableOpacity
                         onPress={() => router.back()}
-                        style={styles.backButton}
+                        style={local.backButton}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#333" />
+                        <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : "#333"} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Labour Details</Text>
+                    <Text style={local.title}>Labour Details</Text>
                     <TouchableOpacity
                         onPress={() => {
                             if (isEditing) {
@@ -162,31 +166,31 @@ export default function LabourDetailsScreen() {
                                 setIsEditing(true);
                             }
                         }}
-                        style={styles.editButton}
+                        style={local.editButton}
                     >
-                        <Text style={styles.editButtonText}>{isEditing ? "Cancel" : "Edit"}</Text>
+                        <Text style={local.editButtonText}>{isEditing ? "Cancel" : "Edit"}</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Profile Header Card */}
-                <View style={styles.profileCard}>
-                    <View style={styles.avatarContainer}>
+                <View style={local.profileCard}>
+                    <View style={local.avatarContainer}>
                         {/* Placeholder for avatar, or use image if available */}
-                        <Ionicons name="person" size={40} color="#fff" />
+                        <Ionicons name="person" size={40} color={isDark ? "#333" : "#fff"} />
                     </View>
                     <View>
-                        <Text style={styles.profileName}>{labour.name}</Text>
-                        <Text style={styles.profileId}>ID: {labour.id}</Text>
-                        <View style={[styles.statusBadge,
-                        { backgroundColor: labour.status === 'active' ? '#2e7d32' : labour.status === 'terminated' ? '#e53935' : '#424242' }
+                        <Text style={local.profileName}>{labour.name}</Text>
+                        <Text style={local.profileId}>ID: {labour.id}</Text>
+                        <View style={[local.statusBadge,
+                        { backgroundColor: labour.status === 'active' ? (isDark ? '#1b4323' : '#2e7d32') : labour.status === 'terminated' ? (isDark ? '#5c1919' : '#e53935') : (isDark ? '#222' : '#424242') }
                         ]}>
-                            <Text style={styles.statusText}>{labour.status.toUpperCase()}</Text>
+                            <Text style={local.statusText}>{labour.status.toUpperCase()}</Text>
                         </View>
                     </View>
                 </View>
 
-                <View style={styles.formContainer}>
-                    <Text style={styles.sectionTitle}>Personal Information</Text>
+                <View style={local.formContainer}>
+                    <Text style={local.sectionTitle}>Personal Information</Text>
 
                     <DetailItem
                         label="Full Name"
@@ -214,11 +218,11 @@ export default function LabourDetailsScreen() {
                     />
 
                     {labour.date_of_birth && (
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Age</Text>
-                            <View style={[styles.inputContainer, styles.readOnlyContainer]}>
-                                <Ionicons name="hourglass-outline" size={20} color="#666" style={styles.inputIcon} />
-                                <Text style={styles.inputText}>{calculateAge(labour.date_of_birth)} yrs</Text>
+                        <View style={local.inputGroup}>
+                            <Text style={local.label}>Age</Text>
+                            <View style={[local.inputContainer, local.readOnlyContainer]}>
+                                <Ionicons name="hourglass-outline" size={20} color={isDark ? "#aaa" : "#666"} style={local.inputIcon} />
+                                <Text style={local.inputText}>{calculateAge(labour.date_of_birth)} yrs</Text>
                             </View>
                         </View>
                     )}
@@ -241,8 +245,8 @@ export default function LabourDetailsScreen() {
                         keyboardType="phone-pad"
                     />
 
-                    <View style={styles.divider} />
-                    <Text style={styles.sectionTitle}>Work Details</Text>
+                    <View style={local.divider} />
+                    <Text style={local.sectionTitle}>Work Details</Text>
 
                     <DetailItem
                         label="Trade / Role"
@@ -264,7 +268,7 @@ export default function LabourDetailsScreen() {
                     <DetailItem
                         label="Current Site"
                         value={labour.site}
-                        field="site" // Note: Editing site name directly might disconnect from site_id if not careful, but for now simple text edit. Ideally dropdown.
+                        field="site"
                         icon="location-outline"
                         isEditable={true}
                     />
@@ -272,15 +276,11 @@ export default function LabourDetailsScreen() {
                     <DetailItem
                         label="Status"
                         value={labour.status}
-                        // Status editing might be better via buttons, but let's allow text for flexibility if admin needs to fix data manually, 
-                        // or better: force readonly and use the buttons on the main list? 
-                        // The user asked for "editable form", so let's allow it but maybe read-only for now to avoid invalid states.
-                        // Actually, let's keep it read-only for now as status has specific logic (terminated/blacklisted).
                         icon="flag-outline"
                         isEditable={false}
                     />
 
-                    <View style={styles.divider} />
+                    <View style={local.divider} />
                     <DetailItem
                         label="Notes"
                         value={labour.notes}
@@ -291,11 +291,11 @@ export default function LabourDetailsScreen() {
 
                     {isEditing && (
                         <TouchableOpacity
-                            style={[styles.saveButton, saving && styles.disabledButton]}
+                            style={[local.saveButton, saving && local.disabledButton]}
                             onPress={handleSave}
                             disabled={saving}
                         >
-                            <Text style={styles.saveButtonText}>
+                            <Text style={local.saveButtonText}>
                                 {saving ? "Saving..." : "Save Changes"}
                             </Text>
                         </TouchableOpacity>
@@ -306,15 +306,16 @@ export default function LabourDetailsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f6fa",
+        backgroundColor: isDark ? "#121212" : "#f5f6fa",
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: isDark ? "#121212" : "#f5f6fa",
     },
     scrollContent: {
         flexGrow: 1,
@@ -330,10 +331,10 @@ const styles = StyleSheet.create({
     backButton: {
         padding: 8,
         borderRadius: 8,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
+        shadowOpacity: isDark ? 0.3 : 0.1,
         shadowRadius: 2,
         elevation: 2,
     },
@@ -341,28 +342,28 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 8,
-        backgroundColor: "#e3f2fd",
+        backgroundColor: isDark ? "#173a5a" : "#e3f2fd",
     },
     editButtonText: {
-        color: "#0a84ff",
+        color: isDark ? "#64b5f6" : "#0a84ff",
         fontWeight: "600",
         fontSize: 14,
     },
     title: {
         fontSize: 20,
         fontWeight: "700",
-        color: "#2d3436",
+        color: isDark ? "#fff" : "#2d3436",
     },
     profileCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? "#1e1e1e" : '#fff',
         borderRadius: 16,
         padding: 20,
         marginBottom: 20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: isDark ? 0.3 : 0.05,
         shadowRadius: 8,
         elevation: 2,
     },
@@ -370,21 +371,21 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 30,
-        backgroundColor: '#bdbdbd',
+        backgroundColor: isDark ? '#444' : '#bdbdbd',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: isDark ? '#1e1e1e' : '#fff',
     },
     profileName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: isDark ? '#fff' : '#333',
     },
     profileId: {
         fontSize: 12,
-        color: '#888',
+        color: isDark ? '#aaa' : '#888',
         marginBottom: 4,
     },
     statusBadge: {
@@ -394,24 +395,24 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     statusText: {
-        color: '#fff',
+        color: isDark ? '#eee' : '#fff',
         fontSize: 10,
         fontWeight: 'bold',
     },
     formContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderRadius: 16,
         padding: 20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: isDark ? 0.3 : 0.05,
         shadowRadius: 8,
         elevation: 3,
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#636e72",
+        color: isDark ? "#aaa" : "#636e72",
         marginBottom: 20,
         marginTop: 10,
         textTransform: "uppercase",
@@ -423,24 +424,24 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 13,
         fontWeight: "600",
-        color: "#636e72",
+        color: isDark ? "#bbb" : "#636e72",
         marginBottom: 6,
         marginLeft: 4,
     },
     inputContainer: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#2a2a2a" : "#fff",
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#e1e1e1",
+        borderColor: isDark ? "#444" : "#e1e1e1",
         paddingHorizontal: 15,
         height: 50,
     },
     readOnlyContainer: {
-        backgroundColor: "#f8f9fa",
-        borderColor: "#f0f0f0",
-        borderWidth: 0,
+        backgroundColor: isDark ? "#1a1a1a" : "#f8f9fa",
+        borderColor: isDark ? "#333" : "#f0f0f0",
+        borderWidth: 1,
     },
     inputIcon: {
         marginRight: 10,
@@ -449,17 +450,17 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 16,
-        color: "#2d3436",
+        color: isDark ? "#fff" : "#2d3436",
         height: "100%",
     },
     inputText: {
         flex: 1,
         fontSize: 16,
-        color: "#2d3436",
+        color: isDark ? "#fff" : "#2d3436",
     },
     divider: {
         height: 1,
-        backgroundColor: "#f0f0f0",
+        backgroundColor: isDark ? "#333" : "#f0f0f0",
         marginVertical: 20,
     },
     saveButton: {

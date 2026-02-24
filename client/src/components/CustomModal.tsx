@@ -1,6 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from "../context/ThemeContext";
 
 export type ModalType = 'default' | 'success' | 'date' | 'error' | 'confirmation' | 'warning';
 
@@ -29,6 +30,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     type = 'default',
     actions = [],
 }) => {
+    const { isDark } = useTheme();
+    const styles = getStyles(isDark);
+
     const getIconName = () => {
         switch (type) {
             case 'success': return 'check-circle';
@@ -42,12 +46,12 @@ export const CustomModal: React.FC<CustomModalProps> = ({
 
     const getIconColor = () => {
         switch (type) {
-            case 'success': return '#4CAF50';
-            case 'error': return '#F44336';
-            case 'warning': return '#FFC107';
-            case 'confirmation': return '#0a84ff';
-            case 'date': return '#0a84ff';
-            default: return '#333';
+            case 'success': return isDark ? '#4caf50' : '#4CAF50';
+            case 'error': return isDark ? '#ef5350' : '#F44336';
+            case 'warning': return isDark ? '#ffb300' : '#FFC107';
+            case 'confirmation': return isDark ? '#4da6ff' : '#0a84ff';
+            case 'date': return isDark ? '#4da6ff' : '#0a84ff';
+            default: return isDark ? '#fff' : '#333';
         }
     };
 
@@ -110,7 +114,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -121,7 +125,7 @@ const styles = StyleSheet.create({
     content: {
         width: '100%',
         maxWidth: 340,
-        backgroundColor: 'white',
+        backgroundColor: isDark ? '#1e1e1e' : 'white',
         borderRadius: 16,
         padding: 24,
         alignItems: 'center',
@@ -130,7 +134,7 @@ const styles = StyleSheet.create({
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.25,
+        shadowOpacity: isDark ? 0.4 : 0.25,
         shadowRadius: 3.84,
         elevation: 5,
     },
@@ -140,13 +144,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
+        color: isDark ? '#fff' : '#333',
         marginBottom: 8,
         textAlign: 'center',
     },
     message: {
         fontSize: 16,
-        color: '#666',
+        color: isDark ? '#aaa' : '#666',
         marginBottom: 24,
         textAlign: 'center',
         lineHeight: 22,
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F44336',
     },
     cancelButton: {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: isDark ? '#333' : '#f5f5f5',
     },
     buttonText: {
         fontSize: 16,
@@ -184,6 +188,6 @@ const styles = StyleSheet.create({
         color: 'white',
     },
     cancelButtonText: {
-        color: '#333',
+        color: isDark ? '#fff' : '#333',
     },
 });

@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 interface Site {
@@ -26,6 +27,8 @@ interface Site {
 
 export default function SitesScreen() {
     const router = useRouter();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
     const [sites, setSites] = useState<Site[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -67,56 +70,56 @@ export default function SitesScreen() {
 
     const renderSite = ({ item }: { item: Site }) => (
         <TouchableOpacity
-            style={styles.card}
+            style={local.card}
             onPress={() => router.push(`/(screens)/site-details?id=${item.id}` as any)}
         >
-            <View style={styles.iconWrap}>
-                <MaterialIcons name="location-city" size={24} color="#0a84ff" />
+            <View style={local.iconWrap}>
+                <MaterialIcons name="location-city" size={24} color={isDark ? "#64b5f6" : "#0a84ff"} />
             </View>
-            <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                {item.address && <Text style={styles.address}>{item.address}</Text>}
-                <View style={styles.statsRow}>
-                    <View style={styles.stat}>
-                        <MaterialIcons name="supervisor-account" size={16} color="#666" />
-                        <Text style={styles.statText}>{item.supervisor_count} supervisors</Text>
+            <View style={local.info}>
+                <Text style={local.name}>{item.name}</Text>
+                {item.address && <Text style={local.address}>{item.address}</Text>}
+                <View style={local.statsRow}>
+                    <View style={local.stat}>
+                        <MaterialIcons name="supervisor-account" size={16} color={isDark ? "#aaa" : "#666"} />
+                        <Text style={local.statText}>{item.supervisor_count} supervisors</Text>
                     </View>
-                    <View style={styles.stat}>
-                        <MaterialIcons name="people" size={16} color="#666" />
-                        <Text style={styles.statText}>{item.labour_count} labours</Text>
+                    <View style={local.stat}>
+                        <MaterialIcons name="people" size={16} color={isDark ? "#aaa" : "#666"} />
+                        <Text style={local.statText}>{item.labour_count} labours</Text>
                     </View>
                 </View>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color="#ccc" />
+            <MaterialIcons name="chevron-right" size={24} color={isDark ? "#555" : "#ccc"} />
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={24} color="#000" />
+        <View style={local.container}>
+            <View style={local.header}>
+                <TouchableOpacity onPress={() => router.back()} style={local.backButton}>
+                    <MaterialIcons name="arrow-back" size={24} color={isDark ? "#fff" : "#000"} />
                 </TouchableOpacity>
-                <Text style={styles.title}>Sites</Text>
+                <Text style={local.title}>Sites</Text>
                 <TouchableOpacity
                     onPress={() => router.push("/(screens)/add-site" as any)}
-                    style={styles.addButton}
+                    style={local.addButton}
                 >
-                    <MaterialIcons name="add" size={24} color="#0a84ff" />
+                    <MaterialIcons name="add" size={24} color={isDark ? "#4da6ff" : "#0a84ff"} />
                 </TouchableOpacity>
             </View>
 
             {loading && !refreshing ? (
-                <ActivityIndicator size="large" color="#0a84ff" style={styles.loader} />
+                <ActivityIndicator size="large" color="#0a84ff" style={local.loader} />
             ) : sites.length === 0 ? (
-                <View style={styles.emptyState}>
-                    <MaterialIcons name="location-city" size={64} color="#ccc" />
-                    <Text style={styles.emptyText}>No sites added yet</Text>
+                <View style={local.emptyState}>
+                    <MaterialIcons name="location-city" size={64} color={isDark ? "#555" : "#ccc"} />
+                    <Text style={local.emptyText}>No sites added yet</Text>
                     <TouchableOpacity
                         onPress={() => router.push("/(screens)/add-site" as any)}
-                        style={styles.addFirstButton}
+                        style={local.addFirstButton}
                     >
-                        <Text style={styles.addFirstText}>Add First Site</Text>
+                        <Text style={local.addFirstText}>Add First Site</Text>
                     </TouchableOpacity>
                 </View>
             ) : (
@@ -124,7 +127,7 @@ export default function SitesScreen() {
                     data={sites}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={renderSite}
-                    contentContainerStyle={styles.list}
+                    contentContainerStyle={local.list}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0a84ff']} />
                     }
@@ -134,10 +137,10 @@ export default function SitesScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: isDark ? "#121212" : "#f5f5f5",
     },
     header: {
         flexDirection: "row",
@@ -145,9 +148,9 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: isDark ? "#333" : "#eee",
     },
     backButton: {
         padding: 8,
@@ -155,7 +158,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     addButton: {
         padding: 8,
@@ -171,13 +174,13 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         padding: 16,
         borderRadius: 12,
         marginBottom: 12,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: isDark ? 0.3 : 0.1,
         shadowRadius: 4,
         elevation: 3,
     },
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: "#e8f4ff",
+        backgroundColor: isDark ? "#1a3b5c" : "#e8f4ff",
         justifyContent: "center",
         alignItems: "center",
         marginRight: 12,
@@ -196,12 +199,12 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
         marginBottom: 4,
     },
     address: {
         fontSize: 14,
-        color: "#666",
+        color: isDark ? "#ccc" : "#666",
         marginBottom: 8,
     },
     statsRow: {
@@ -215,7 +218,7 @@ const styles = StyleSheet.create({
     },
     statText: {
         fontSize: 12,
-        color: "#666",
+        color: isDark ? "#aaa" : "#666",
     },
     emptyState: {
         flex: 1,
@@ -225,7 +228,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: "#999",
+        color: isDark ? "#888" : "#999",
         marginTop: 16,
         marginBottom: 24,
     },

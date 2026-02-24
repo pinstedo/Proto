@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { openDb } = require('../database');
 
 const router = express.Router();
@@ -87,7 +88,7 @@ router.get('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
 
 // Add new labour
 router.post('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
-    const { name, phone, aadhaar, site, site_id, rate, notes, trade, date_of_birth } = req.body;
+    const { name, phone, password, aadhaar, site, site_id, rate, notes, trade, date_of_birth } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'Name is required' });
@@ -95,6 +96,10 @@ router.post('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
 
     if (!phone || phone.length !== 10) {
         return res.status(400).json({ error: 'Valid 10-digit phone number is required' });
+    }
+
+    if (!password || password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
     if (rate && isNaN(parseFloat(rate))) {
@@ -124,9 +129,11 @@ router.post('/', authorizeRole(['admin', 'supervisor']), async (req, res) => {
             }
         }
 
+        const password_hash = await bcrypt.hash(password, 10);
+
         const result = await db.run(
-            `INSERT INTO labours (name, phone, aadhaar, site, site_id, rate, notes, trade, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, phone, aadhaar, site, site_id, rate, notes, trade, date_of_birth]
+            `INSERT INTO labours (name, phone, password_hash, aadhaar, site, site_id, rate, notes, trade, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, phone, password_hash, aadhaar, site, site_id, rate, notes, trade, date_of_birth]
         );
 
         const newLabour = await db.get(`SELECT * FROM labours WHERE id = ?`, [result.lastID]);

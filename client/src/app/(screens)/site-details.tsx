@@ -14,6 +14,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { api } from "../../services/api";
 
 interface Supervisor {
@@ -42,6 +43,9 @@ interface SiteDetails {
 export default function SiteDetailsScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { isDark } = useTheme();
+    const local = getStyles(isDark);
+
     const [site, setSite] = useState<SiteDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -209,7 +213,7 @@ export default function SiteDetailsScreen() {
 
     if (loading) {
         return (
-            <View style={styles.loaderContainer}>
+            <View style={local.loaderContainer}>
                 <ActivityIndicator size="large" color="#0a84ff" />
             </View>
         );
@@ -217,89 +221,92 @@ export default function SiteDetailsScreen() {
 
     if (!site) {
         return (
-            <View style={styles.container}>
-                <Text>Site not found</Text>
+            <View style={local.container}>
+                <Text style={{ color: isDark ? "#fff" : "#000" }}>Site not found</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={24} color="#000" />
+        <View style={local.container}>
+            <View style={local.header}>
+                <TouchableOpacity onPress={() => router.back()} style={local.backButton}>
+                    <MaterialIcons name="arrow-back" size={24} color={isDark ? "#fff" : "#000"} />
                 </TouchableOpacity>
-                <Text style={styles.title}>Site Details</Text>
-                <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
-                    <MaterialIcons name={isEditing ? "close" : "edit"} size={24} color="#0a84ff" />
+                <Text style={local.title}>Site Details</Text>
+                <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={local.editButton}>
+                    <MaterialIcons name={isEditing ? "close" : "edit"} size={24} color={isDark ? "#4da6ff" : "#0a84ff"} />
                 </TouchableOpacity>
             </View>
 
             <FlatList
                 data={[{ key: "content" }]}
                 renderItem={() => (
-                    <View style={styles.content}>
+                    <View style={local.content}>
                         {/* Site Info Section */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Site Information</Text>
+                        <View style={local.section}>
+                            <Text style={local.sectionTitle}>Site Information</Text>
                             {isEditing ? (
-                                <View style={styles.editForm}>
-                                    <Text style={styles.label}>Name</Text>
+                                <View style={local.editForm}>
+                                    <Text style={local.label}>Name</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={local.input}
                                         value={editName}
                                         onChangeText={setEditName}
+                                        placeholderTextColor={isDark ? "#888" : "#999"}
                                     />
-                                    <Text style={styles.label}>Address</Text>
+                                    <Text style={local.label}>Address</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={local.input}
                                         value={editAddress}
                                         onChangeText={setEditAddress}
+                                        placeholderTextColor={isDark ? "#888" : "#999"}
                                     />
-                                    <Text style={styles.label}>Description</Text>
+                                    <Text style={local.label}>Description</Text>
                                     <TextInput
-                                        style={[styles.input, { height: 80 }]}
+                                        style={[local.input, { height: 80 }]}
                                         value={editDescription}
                                         onChangeText={setEditDescription}
                                         multiline
+                                        placeholderTextColor={isDark ? "#888" : "#999"}
                                     />
-                                    <TouchableOpacity style={styles.saveBtn} onPress={handleUpdate}>
-                                        <Text style={styles.saveBtnText}>Save Changes</Text>
+                                    <TouchableOpacity style={local.saveBtn} onPress={handleUpdate}>
+                                        <Text style={local.saveBtnText}>Save Changes</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <View style={styles.infoCard}>
-                                    <Text style={styles.siteName}>{site.name}</Text>
-                                    {site.address && <Text style={styles.siteAddress}>{site.address}</Text>}
-                                    {site.description && <Text style={styles.siteDesc}>{site.description}</Text>}
+                                <View style={local.infoCard}>
+                                    <Text style={local.siteName}>{site.name}</Text>
+                                    {site.address && <Text style={local.siteAddress}>{site.address}</Text>}
+                                    {site.description && <Text style={local.siteDesc}>{site.description}</Text>}
                                 </View>
                             )}
                         </View>
 
                         {/* Supervisors Section */}
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Assigned Supervisors</Text>
-                                <TouchableOpacity onPress={openAssignModal} style={styles.addBtn}>
-                                    <MaterialIcons name="add" size={20} color="#0a84ff" />
-                                    <Text style={styles.addBtnText}>Assign</Text>
+                        <View style={local.section}>
+                            <View style={local.sectionHeader}>
+                                <Text style={local.sectionTitle}>Assigned Supervisors</Text>
+                                <TouchableOpacity onPress={openAssignModal} style={local.addBtn}>
+                                    <MaterialIcons name="add" size={20} color={isDark ? "#4da6ff" : "#0a84ff"} />
+                                    <Text style={local.addBtnText}>Assign</Text>
                                 </TouchableOpacity>
                             </View>
                             {site.supervisors.length === 0 ? (
-                                <Text style={styles.emptyText}>No supervisors assigned</Text>
+                                <Text style={local.emptyText}>No supervisors assigned</Text>
                             ) : (
                                 site.supervisors.map((sup) => (
-                                    <View key={sup.id} style={styles.personCard}>
-                                        <View style={styles.personIconWrap}>
-                                            <MaterialIcons name="person" size={20} color="#0a84ff" />
+                                    <View key={sup.id} style={local.personCard}>
+                                        <View style={local.personIconWrap}>
+                                            <MaterialIcons name="person" size={20} color={isDark ? "#4da6ff" : "#0a84ff"} />
                                         </View>
-                                        <View style={styles.personInfo}>
-                                            <Text style={styles.personName}>{sup.name}</Text>
-                                            <Text style={styles.personPhone}>{sup.phone}</Text>
+                                        <View style={local.personInfo}>
+                                            <Text style={local.personName}>{sup.name}</Text>
+                                            <Text style={local.personPhone}>{sup.phone}</Text>
                                         </View>
                                         <TouchableOpacity
                                             onPress={() => handleUnassignSupervisor(sup.id, sup.name)}
-                                            style={styles.removeBtn}
+                                            style={local.removeBtn}
                                         >
                                             <MaterialIcons name="remove-circle" size={24} color="#ff3b30" />
                                         </TouchableOpacity>
@@ -309,19 +316,19 @@ export default function SiteDetailsScreen() {
                         </View>
 
                         {/* Labours Section */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Labours at this Site</Text>
+                        <View style={local.section}>
+                            <Text style={local.sectionTitle}>Labours at this Site</Text>
                             {site.labours.length === 0 ? (
-                                <Text style={styles.emptyText}>No labours assigned to this site</Text>
+                                <Text style={local.emptyText}>No labours assigned to this site</Text>
                             ) : (
                                 site.labours.map((labour) => (
-                                    <View key={labour.id} style={styles.personCard}>
-                                        <View style={styles.personIconWrap}>
+                                    <View key={labour.id} style={local.personCard}>
+                                        <View style={local.personIconWrapGreen}>
                                             <MaterialIcons name="engineering" size={20} color="#34c759" />
                                         </View>
-                                        <View style={styles.personInfo}>
-                                            <Text style={styles.personName}>{labour.name}</Text>
-                                            <Text style={styles.personPhone}>{labour.phone || labour.trade}</Text>
+                                        <View style={local.personInfo}>
+                                            <Text style={local.personName}>{labour.name}</Text>
+                                            <Text style={local.personPhone}>{labour.phone || labour.trade}</Text>
                                         </View>
                                     </View>
                                 ))
@@ -329,9 +336,9 @@ export default function SiteDetailsScreen() {
                         </View>
 
                         {/* Delete Button */}
-                        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+                        <TouchableOpacity style={local.deleteBtn} onPress={handleDelete}>
                             <MaterialIcons name="delete" size={20} color="#fff" />
-                            <Text style={styles.deleteBtnText}>Delete Site</Text>
+                            <Text style={local.deleteBtnText}>Delete Site</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -342,31 +349,31 @@ export default function SiteDetailsScreen() {
 
             {/* Assign Supervisor Modal */}
             <Modal visible={showAssignModal} transparent animationType="slide">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Assign Supervisor</Text>
+                <View style={local.modalOverlay}>
+                    <View style={local.modalContent}>
+                        <View style={local.modalHeader}>
+                            <Text style={local.modalTitle}>Assign Supervisor</Text>
                             <TouchableOpacity onPress={() => setShowAssignModal(false)}>
-                                <MaterialIcons name="close" size={24} color="#333" />
+                                <MaterialIcons name="close" size={24} color={isDark ? "#fff" : "#333"} />
                             </TouchableOpacity>
                         </View>
                         {availableSupervisors.length === 0 ? (
-                            <Text style={styles.emptyText}>No available supervisors to assign</Text>
+                            <Text style={local.emptyText}>No available supervisors to assign</Text>
                         ) : (
                             <FlatList
                                 data={availableSupervisors}
                                 keyExtractor={(item) => item.id.toString()}
                                 renderItem={({ item }) => (
                                     <TouchableOpacity
-                                        style={styles.supervisorOption}
+                                        style={local.supervisorOption}
                                         onPress={() => handleAssignSupervisor(item.id)}
                                     >
-                                        <View style={styles.personIconWrap}>
-                                            <MaterialIcons name="person" size={20} color="#0a84ff" />
+                                        <View style={local.personIconWrap}>
+                                            <MaterialIcons name="person" size={20} color={isDark ? "#4da6ff" : "#0a84ff"} />
                                         </View>
-                                        <View style={styles.personInfo}>
-                                            <Text style={styles.personName}>{item.name}</Text>
-                                            <Text style={styles.personPhone}>{item.phone}</Text>
+                                        <View style={local.personInfo}>
+                                            <Text style={local.personName}>{item.name}</Text>
+                                            <Text style={local.personPhone}>{item.phone}</Text>
                                         </View>
                                         <MaterialIcons name="add-circle" size={24} color="#34c759" />
                                     </TouchableOpacity>
@@ -380,15 +387,16 @@ export default function SiteDetailsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: isDark ? "#121212" : "#f5f5f5",
     },
     loaderContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: isDark ? "#121212" : "#f5f5f5",
     },
     header: {
         flexDirection: "row",
@@ -396,9 +404,9 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: isDark ? "#333" : "#eee",
     },
     backButton: {
         padding: 8,
@@ -406,7 +414,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     editButton: {
         padding: 8,
@@ -426,49 +434,50 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
         marginBottom: 12,
     },
     infoCard: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         padding: 16,
         borderRadius: 12,
     },
     siteName: {
         fontSize: 20,
         fontWeight: "700",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
         marginBottom: 8,
     },
     siteAddress: {
         fontSize: 14,
-        color: "#666",
+        color: isDark ? "#aaa" : "#666",
         marginBottom: 4,
     },
     siteDesc: {
         fontSize: 14,
-        color: "#888",
+        color: isDark ? "#888" : "#888",
         marginTop: 8,
     },
     editForm: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         padding: 16,
         borderRadius: 12,
     },
     label: {
         fontSize: 14,
         fontWeight: "500",
-        color: "#333",
+        color: isDark ? "#ccc" : "#333",
         marginBottom: 6,
         marginTop: 12,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#e6e6e6",
+        borderColor: isDark ? "#444" : "#e6e6e6",
         padding: 12,
         borderRadius: 8,
-        backgroundColor: "#fafafa",
+        backgroundColor: isDark ? "#2a2a2a" : "#fafafa",
         fontSize: 16,
+        color: isDark ? "#fff" : "#000",
     },
     saveBtn: {
         backgroundColor: "#0a84ff",
@@ -487,11 +496,11 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     addBtnText: {
-        color: "#0a84ff",
+        color: isDark ? "#4da6ff" : "#0a84ff",
         fontWeight: "600",
     },
     emptyText: {
-        color: "#999",
+        color: isDark ? "#888" : "#999",
         fontSize: 14,
         textAlign: "center",
         padding: 16,
@@ -499,7 +508,7 @@ const styles = StyleSheet.create({
     personCard: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
@@ -508,7 +517,16 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: "#e8f4ff",
+        backgroundColor: isDark ? "#1a3b5c" : "#e8f4ff",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+    },
+    personIconWrapGreen: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: isDark ? "#1b4323" : "#e8fdf0",
         justifyContent: "center",
         alignItems: "center",
         marginRight: 12,
@@ -519,11 +537,11 @@ const styles = StyleSheet.create({
     personName: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     personPhone: {
         fontSize: 12,
-        color: "#666",
+        color: isDark ? "#aaa" : "#666",
     },
     removeBtn: {
         padding: 4,
@@ -548,7 +566,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     modalContent: {
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         maxHeight: "70%",
@@ -561,18 +579,18 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: isDark ? "#333" : "#eee",
     },
     modalTitle: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#333",
+        color: isDark ? "#fff" : "#333",
     },
     supervisorOption: {
         flexDirection: "row",
         alignItems: "center",
         padding: 12,
         borderBottomWidth: 1,
-        borderBottomColor: "#f0f0f0",
+        borderBottomColor: isDark ? "#333" : "#f0f0f0",
     },
 });

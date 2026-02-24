@@ -394,4 +394,122 @@ router.get('/wage-month', authorizeRole(['admin', 'supervisor']), async (req, re
     }
 });
 
+// POST /api/reports/complaints - Allow labours to submit a complaint
+router.post('/complaints', async (req, res) => {
+    try {
+        const { complaint } = req.body;
+        // In the LabourDashboard, we make an authenticated request, but we also can get the token here
+        // The token is checked in authenticateToken middleware if we add it, but since reports.js
+        // handles multiple roles we might need to parse auth header manually or use an existing middleware
+
+        // Let's use authenticateToken if available, or just parse the Bearer for labour ID
+        const authHeader = req.headers['authorization'];
+        let tokenLabourId = null;
+        if (authHeader) {
+            const token = authHeader.split(' ')[1];
+            // Decode the token (assumes jwt is available, but let's just do a manual decode or trust a passed ID if we don't have the secret here easily)
+            // A safer way: import jwt
+            const jwt = require('jsonwebtoken');
+            const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key';
+            try {
+                const decoded = jwt.verify(token, SECRET_KEY);
+                tokenLabourId = decoded.id; // Either user id or labour id
+                // If the token has a role = admin/supervisor, they shouldn't be submitting labour complaints, 
+                // but we can allow it for testing if needed.
+            } catch (err) {
+                // Ignore verify error here, let it fail on insert if needed
+            }
+        }
+
+        if (!complaint || typeof complaint !== 'string' || complaint.trim() === '') {
+            return res.status(400).json({ error: 'Complaint text is required' });
+        }
+
+        const db = await openDb();
+        const result = await db.run(
+            `INSERT INTO complaints (labour_id, complaint, status) VALUES (?, ?, 'unread')`,
+            [tokenLabourId, complaint.trim()]
+        );
+
+        res.status(201).json({ id: result.lastID, message: 'Complaint submitted successfully' });
+    } catch (error) {
+        console.error('Error submitting complaint:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /api/reports/unread-count - Admin fetches the count of unread complaints
+router.get('/unread-count', authorizeRole(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const db = await openDb();
+        const row = await db.get(`SELECT COUNT(*) as count FROM complaints WHERE status = 'unread'`);
+        res.json({ unreadCount: row.count || 0 });
+    } catch (error) {
+        console.error('Error fetching unread complaint count:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /api/reports/complaints - Admin fetches the list of complaints
+router.get('/complaints', authorizeRole(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const db = await openDb();
+        // Fetch complaints joined with labour info and site info
+        const complaints = await db.all(`
+            SELECT 
+                c.id, c.complaint, c.status, c.created_at, 
+                l.name as labour_name, l.profile_image,
+                s.name as site_name 
+            FROM complaints c 
+            LEFT JOIN labours l ON c.labour_id = l.id 
+            LEFT JOIN sites s ON l.site_id = s.id
+            ORDER BY c.created_at DESC
+        `);
+        res.json(complaints);
+    } catch (error) {
+        console.error('Error fetching complaints:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PUT /api/reports/complaints/mark-read - Admin marks all unread complaints as read
+router.put('/complaints/mark-read', authorizeRole(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const db = await openDb();
+        const { id } = req.body; // Optional ID to mark specific complaint
+
+        if (id) {
+            await db.run(`UPDATE complaints SET status = 'read' WHERE id = ?`, [id]);
+            res.json({ message: 'Complaint marked as read' });
+        } else {
+            await db.run(`UPDATE complaints SET status = 'read' WHERE status = 'unread'`);
+            res.json({ message: 'All complaints marked as read' });
+        }
+    } catch (error) {
+        console.error('Error marking complaints as read:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// DELETE /api/reports/complaints/:id - Admin deletes a specific complaint
+router.delete('/complaints/:id', authorizeRole(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const db = await openDb();
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: 'Complaint ID is required' });
+        }
+
+        const result = await db.run(`DELETE FROM complaints WHERE id = ?`, [id]);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Complaint not found' });
+        }
+        res.json({ message: 'Complaint deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting complaint:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;

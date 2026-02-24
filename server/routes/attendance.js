@@ -41,9 +41,10 @@ router.get('/my-attendance', async (req, res) => {
         const db = await openDb();
         // Get all attendance records for this labour
         const attendance = await db.all(
-            `SELECT a.*, s.name as site_name 
+            `SELECT a.*, s.name as site_name, u.name as supervisor_name
             FROM attendance a 
             JOIN sites s ON a.site_id = s.id 
+            LEFT JOIN users u ON a.supervisor_id = u.id
             WHERE a.labour_id = ? 
             ORDER BY a.date DESC`,
             [req.user.id]
