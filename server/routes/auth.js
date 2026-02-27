@@ -267,54 +267,7 @@ router.post('/refresh-token', async (req, res) => {
     }
 });
 
-// Labour Signin
-router.post('/labour-signin', async (req, res) => {
-    const { name, phone } = req.body;
 
-    if (!name || !phone) {
-        return res.status(400).json({ error: 'Name and phone are required' });
-    }
-
-    try {
-        const db = await openDb();
-        // Check for exact match on name and phone
-        // Also ensure status is active? User request didn't specify, but implied access.
-        // Let's enforce status='active' for security.
-        const labour = await db.get(
-            `SELECT * FROM labours WHERE name = ? AND phone = ? AND status = 'active'`,
-            [name, phone]
-        );
-
-        if (!labour) {
-            return res.status(401).json({ error: 'Invalid credentials or inactive account' });
-        }
-
-        // Generate tokens (7 days for refresh)
-        const accessToken = jwt.sign(
-            { id: labour.id, phone: labour.phone, role: 'labour' },
-            SECRET_KEY,
-            { expiresIn: '15m' }
-        );
-
-        const refreshToken = crypto.randomBytes(40).toString('hex');
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
-
-        await db.run(
-            `INSERT INTO labour_refresh_tokens (labour_id, token, expires_at) VALUES (?, ?, ?)`,
-            [labour.id, refreshToken, expiresAt]
-        );
-
-        res.json({
-            message: 'Login successful',
-            accessToken,
-            refreshToken,
-            user: labour // Returning labour object as 'user' for frontend compatibility
-        });
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // Get all supervisors
 router.get('/supervisors', authenticateToken, async (req, res) => {

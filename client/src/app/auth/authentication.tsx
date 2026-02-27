@@ -243,15 +243,4 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
     color: isDark ? "#63b3ed" : "#3182CE",
     fontWeight: "700",
   },
-  labourLoginButton: {
-    marginTop: 32,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  labourLoginText: {
-    fontSize: 14,
-    color: isDark ? "#aaa" : "#A0AEC0",
-    fontWeight: "500",
-    textDecorationLine: "underline",
-  },
 });
